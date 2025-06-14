@@ -15,13 +15,18 @@ import {
   AlertTriangle,
   BarChart3,
   FileSpreadsheet,
-  CreditCard
+  CreditCard,
+  Upload,
+  Shield
 } from 'lucide-react';
 import financialData from '@/data/financialData.json';
 import { FinancialTable } from '@/components/FinancialTable';
 import { RatioAnalysis } from '@/components/RatioAnalysis';
 import { TrendChart } from '@/components/TrendChart';
 import { LoanEligibilityScore } from '@/components/LoanEligibilityScore';
+import { CADLoanAssessment } from '@/components/CADLoanAssessment';
+import { DocumentImport } from '@/components/DocumentImport';
+import { calculateCADRatios, getCADLoanRecommendation } from '@/utils/cadRatioCalculations';
 
 interface FinancialItem {
   field_name: string;
@@ -39,6 +44,17 @@ interface FinancialData {
 
 const Index = () => {
   const [selectedYear, setSelectedYear] = useState<number>(2023);
+  const [cadLoanData, setCADLoanData] = useState({
+    requestedAmount: 25000000, // AED 25M
+    loanTenor: 6, // 6 months
+    interestRate: 5.5,
+    collateralValue: 30000000, // AED 30M
+    documentsCoverage: 85,
+    tradingHistory: 7,
+    averageMonthlyTurnover: 8000000,
+    currentOutstandings: 15000000
+  });
+  
   const data = financialData as FinancialData;
   
   const years = useMemo(() => {
@@ -60,7 +76,56 @@ const Index = () => {
     return `AED ${(value / 1000000).toFixed(2)}M`;
   };
 
-  const calculateRatios = (year: number) => {
+  // Enhanced ratio calculations using CAD-specific formulas
+  const calculateEnhancedRatios = (year: number) => {
+    const totalAssets = getValueByFieldAndYear("Balance Sheet", "Total Assets", year);
+    const currentAssets = getValueByFieldAndYear("Balance Sheet", "Current Assets", year);
+    const currentLiabilities = getValueByFieldAndYear("Balance Sheet", "Current Liabilities", year);
+    const totalLiabilities = getValueByFieldAndYear("Balance Sheet", "Total Liabilities", year);
+    const shareholderEquity = getValueByFieldAndYear("Balance Sheet", "Shareholder's Equity", year);
+    const totalRevenue = getValueByFieldAndYear("Income Statement", "Total Revenue", year);
+    const netProfit = getValueByFieldAndYear("Income Statement", "Net Profit", year);
+    const ebitda = getValueByFieldAndYear("Income Statement", "EBITDA", year);
+    const interestExpense = getValueByFieldAndYear("Income Statement", "Interest Expense", year);
+    const operatingCashFlow = getValueByFieldAndYear("Cash Flow Statement", "Net Cash from Operating Activities", year);
+    const longTermDebt = getValueByFieldAndYear("Balance Sheet", "Long-Term Debt", year);
+    const shortTermDebt = getValueByFieldAndYear("Balance Sheet", "Short-Term Debt", year);
+
+    const financialData = {
+      totalAssets,
+      currentAssets,
+      currentLiabilities,
+      totalLiabilities,
+      shareholderEquity,
+      totalRevenue,
+      netProfit,
+      ebitda,
+      interestExpense,
+      operatingCashFlow,
+      inventory: currentAssets * 0.3, // Assumption
+      accountsReceivable: currentAssets * 0.4, // Assumption
+      accountsPayable: currentLiabilities * 0.6, // Assumption
+      shortTermDebt,
+      longTermDebt,
+      workingCapital: currentAssets - currentLiabilities
+    };
+
+    const tradeData = {
+      averageDailySales: totalRevenue / 365,
+      averageCollectionPeriod: 45, // days
+      averagePaymentPeriod: 30, // days
+      documentValue: cadLoanData.requestedAmount * 1.2,
+      collateralValue: cadLoanData.collateralValue
+    };
+
+    return calculateCADRatios(financialData, undefined, tradeData);
+  };
+
+  const currentRatios = calculateEnhancedRatios(selectedYear);
+  const loanRecommendation = getCADLoanRecommendation(currentRatios);
+
+  // Legacy ratios for backward compatibility
+  const calculateLegacyRatios = (year: number) => {
     const totalAssets = getValueByFieldAndYear("Balance Sheet", "Total Assets", year);
     const currentAssets = getValueByFieldAndYear("Balance Sheet", "Current Assets", year);
     const currentLiabilities = getValueByFieldAndYear("Balance Sheet", "Current Liabilities", year);
@@ -86,7 +151,13 @@ const Index = () => {
     };
   };
 
-  const currentRatios = calculateRatios(selectedYear);
+  const legacyRatios = calculateLegacyRatios(selectedYear);
+
+  const handleDocumentProcessed = (extractedData: any) => {
+    console.log('Document processed:', extractedData);
+    // Here you would integrate the extracted financial data
+    // with the existing financial data for more accurate calculations
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -96,9 +167,9 @@ const Index = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <FileSpreadsheet className="h-8 w-8 text-blue-600" />
-              Financial Spreading Dashboard
+              CAD Loan Assessment Platform
             </h1>
-            <p className="text-gray-600 mt-2">Bank Credit Team - Loan Eligibility Analysis</p>
+            <p className="text-gray-600 mt-2">Cash Against Documents - Comprehensive Credit Analysis</p>
           </div>
           <div className="flex items-center gap-4">
             <select 
@@ -110,15 +181,32 @@ const Index = () => {
                 <option key={year} value={year}>Year {year}</option>
               ))}
             </select>
-            <Badge variant="outline" className="px-3 py-1">
-              <CreditCard className="h-4 w-4 mr-1" />
-              Credit Assessment
+            <Badge variant={loanRecommendation.recommendation === 'approve' ? 'default' : 
+                            loanRecommendation.recommendation === 'conditional' ? 'secondary' : 'destructive'} 
+                   className="px-3 py-1">
+              <Shield className="h-4 w-4 mr-1" />
+              {loanRecommendation.recommendation.toUpperCase()}
             </Badge>
           </div>
         </div>
 
-        {/* Loan Eligibility Score */}
-        <LoanEligibilityScore ratios={currentRatios} year={selectedYear} />
+        {/* Loan Recommendation Alert */}
+        <Alert className={loanRecommendation.recommendation === 'approve' ? 'border-green-200 bg-green-50' :
+                         loanRecommendation.recommendation === 'conditional' ? 'border-yellow-200 bg-yellow-50' :
+                         'border-red-200 bg-red-50'}>
+          <Shield className="h-4 w-4" />
+          <AlertDescription className="font-medium">
+            <strong>Credit Recommendation:</strong> {loanRecommendation.recommendation.toUpperCase()} - 
+            {loanRecommendation.reasons.slice(0, 2).join(', ')}
+            {loanRecommendation.suggestedTerms && (
+              <span className="block mt-2">
+                Max Amount: {formatCurrency(loanRecommendation.suggestedTerms.maxAmount)} | 
+                Rate: {loanRecommendation.suggestedTerms.interestRate}% | 
+                Tenor: {loanRecommendation.suggestedTerms.tenor} months
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
 
         {/* Key Metrics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -162,35 +250,49 @@ const Index = () => {
                 {currentRatios.currentRatio.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Liquidity measure
+                Enhanced liquidity measure
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Debt-to-Equity</CardTitle>
+              <CardTitle className="text-sm font-medium">Credit Risk Score</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {currentRatios.debtToEquity.toFixed(2)}
+                {currentRatios.creditRiskScore.toFixed(0)}/100
               </div>
               <p className="text-xs text-muted-foreground">
-                Leverage indicator
+                AI-powered risk assessment
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="statements" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="statements">Financial Statements</TabsTrigger>
-            <TabsTrigger value="ratios">Ratio Analysis</TabsTrigger>
-            <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
-            <TabsTrigger value="eligibility">Loan Assessment</TabsTrigger>
+        <Tabs defaultValue="cad-assessment" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="cad-assessment">CAD Assessment</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="statements">Statements</TabsTrigger>
+            <TabsTrigger value="ratios">Enhanced Ratios</TabsTrigger>
+            <TabsTrigger value="trends">Trends</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy View</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="cad-assessment">
+            <CADLoanAssessment 
+              ratios={currentRatios} 
+              loanData={cadLoanData}
+              year={selectedYear} 
+            />
+          </TabsContent>
+
+          <TabsContent value="documents">
+            <DocumentImport onDocumentProcessed={handleDocumentProcessed} />
+          </TabsContent>
 
           <TabsContent value="statements" className="space-y-6">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -236,24 +338,100 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="ratios">
-            <RatioAnalysis ratios={currentRatios} year={selectedYear} />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Enhanced CAD-specific ratios display */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Liquidity Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Current Ratio:</span>
+                      <span className="font-mono">{currentRatios.currentRatio.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Quick Ratio:</span>
+                      <span className="font-mono">{currentRatios.quickRatio.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cash Ratio:</span>
+                      <span className="font-mono">{currentRatios.cashRatio.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Working Capital Ratio:</span>
+                      <span className="font-mono">{(currentRatios.workingCapitalRatio * 100).toFixed(1)}%</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">CAD-Specific Metrics</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Trade Finance Ratio:</span>
+                      <span className="font-mono">{currentRatios.tradeFinanceRatio.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Document Coverage:</span>
+                      <span className="font-mono">{currentRatios.documentCoverageRatio.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cash Conversion Cycle:</span>
+                      <span className="font-mono">{currentRatios.cashConversionCycle.toFixed(0)} days</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Receivables Turnover:</span>
+                      <span className="font-mono">{currentRatios.receivablesTurnover.toFixed(1)}x</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Risk Assessment</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Credit Risk Score:</span>
+                      <span className="font-mono">{currentRatios.creditRiskScore.toFixed(0)}/100</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Concentration Risk:</span>
+                      <span className="font-mono">{currentRatios.concentrationRisk.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Volatility Index:</span>
+                      <span className="font-mono">{currentRatios.volatilityIndex.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Interest Coverage:</span>
+                      <span className="font-mono">{currentRatios.timesInterestEarned.toFixed(1)}x</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="trends">
             <TrendChart data={data} years={years} />
           </TabsContent>
 
-          <TabsContent value="eligibility">
+          <TabsContent value="legacy">
             <div className="space-y-6">
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  This loan eligibility assessment is based on standard banking ratios and thresholds. 
-                  Final loan decisions require additional documentation and credit bureau checks.
+                  Legacy view showing original loan eligibility assessment. 
+                  Use the CAD Assessment tab for enhanced trade finance analysis.
                 </AlertDescription>
               </Alert>
               
-              <LoanEligibilityScore ratios={currentRatios} year={selectedYear} detailed={true} />
+              <LoanEligibilityScore ratios={legacyRatios} year={selectedYear} detailed={true} />
+              <RatioAnalysis ratios={legacyRatios} year={selectedYear} />
             </div>
           </TabsContent>
         </Tabs>
