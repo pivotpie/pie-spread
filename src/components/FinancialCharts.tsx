@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 
 interface FinancialItem {
@@ -98,7 +98,36 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
     value: {
       label: "Value (AED M)",
       color: "#8884d8"
+    },
+    revenue: {
+      label: "Revenue",
+      color: "#8884d8"
+    },
+    profit: {
+      label: "Net Profit",
+      color: "#82ca9d"
     }
+  };
+
+  const renderCustomLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    const radius = 10;
+    return (
+      <text 
+        x={x + width / 2} 
+        y={y - radius} 
+        fill="#666" 
+        textAnchor="middle" 
+        dominantBaseline="middle"
+        fontSize="10"
+      >
+        {`${value.toFixed(1)}M`}
+      </text>
+    );
+  };
+
+  const renderPieLabel = (entry: any) => {
+    return `${entry.name}: ${entry.value.toFixed(1)}M`;
   };
 
   return (
@@ -115,15 +144,22 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={assetsLiabilitiesData}>
+              <BarChart data={assetsLiabilitiesData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 8 }} angle={-45} textAnchor="end" height={60} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
                 />
-                <Bar dataKey="value" fill="#8884d8" />
+                <Bar dataKey="value" fill="#8884d8">
+                  <LabelList content={renderCustomLabel} />
+                </Bar>
+                <Legend 
+                  content={<ChartLegendContent />}
+                  verticalAlign="bottom"
+                  height={36}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -142,7 +178,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueTrendData}>
+              <LineChart data={revenueTrendData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="year" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
@@ -150,8 +186,17 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   content={<ChartTooltipContent />}
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} name="Revenue" />
-                <Line type="monotone" dataKey="profit" stroke="#82ca9d" strokeWidth={2} name="Net Profit" />
+                <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} name="Revenue">
+                  <LabelList dataKey="revenue" position="top" fontSize={9} formatter={(value: number) => `${value.toFixed(1)}M`} />
+                </Line>
+                <Line type="monotone" dataKey="profit" stroke="#82ca9d" strokeWidth={2} name="Net Profit">
+                  <LabelList dataKey="profit" position="bottom" fontSize={9} formatter={(value: number) => `${value.toFixed(1)}M`} />
+                </Line>
+                <Legend 
+                  content={<ChartLegendContent />}
+                  verticalAlign="bottom"
+                  height={36}
+                />
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -170,14 +215,17 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <Pie
                   data={cashFlowData}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
+                  cy="40%"
+                  innerRadius={30}
+                  outerRadius={60}
                   dataKey="value"
+                  label={renderPieLabel}
+                  labelLine={false}
+                  fontSize={8}
                 >
                   {cashFlowData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -186,6 +234,11 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
+                />
+                <Legend 
+                  content={<ChartLegendContent />}
+                  verticalAlign="bottom"
+                  height={36}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -205,14 +258,17 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <Pie
                   data={equityDebtData}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
+                  cy="40%"
+                  innerRadius={30}
+                  outerRadius={60}
                   dataKey="value"
+                  label={renderPieLabel}
+                  labelLine={false}
+                  fontSize={8}
                 >
                   {equityDebtData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -221,6 +277,11 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
+                />
+                <Legend 
+                  content={<ChartLegendContent />}
+                  verticalAlign="bottom"
+                  height={36}
                 />
               </PieChart>
             </ResponsiveContainer>
