@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,9 +15,10 @@ import {
 
 interface BlankStateProps {
   onImportClick: () => void;
+  onSampleDataLoad: () => void;
 }
 
-export const BlankState: React.FC<BlankStateProps> = ({ onImportClick }) => {
+export const BlankState: React.FC<BlankStateProps> = ({ onImportClick, onSampleDataLoad }) => {
   const features = [
     {
       icon: Calculator,
@@ -78,7 +78,12 @@ export const BlankState: React.FC<BlankStateProps> = ({ onImportClick }) => {
             Import Financial Documents
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
-          <Button variant="outline" size="lg" className="px-8 py-6 text-lg">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="px-8 py-6 text-lg"
+            onClick={onSampleDataLoad}
+          >
             <FileSpreadsheet className="h-6 w-6 mr-2" />
             View Sample Assessment
           </Button>

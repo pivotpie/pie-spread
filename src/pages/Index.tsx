@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +67,12 @@ const Index = () => {
     }
   };
 
+  const handleSampleDataLoad = () => {
+    import('@/data/financialData.json').then((data) => {
+      handleDataImported(data.default);
+    });
+  };
+
   const getValueByFieldAndYear = (statement: keyof FinancialData, fieldName: string, year: number) => {
     if (!data) return 0;
     const item = data[statement].find(item => 
@@ -126,7 +131,10 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
-          <BlankState onImportClick={() => setIsImportModalOpen(true)} />
+          <BlankState 
+            onImportClick={() => setIsImportModalOpen(true)} 
+            onSampleDataLoad={handleSampleDataLoad}
+          />
           <DocumentImportModal
             isOpen={isImportModalOpen}
             onClose={() => setIsImportModalOpen(false)}

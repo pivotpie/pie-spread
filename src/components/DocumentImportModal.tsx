@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -97,18 +96,27 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors relative">
                   <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <div className="space-y-2">
                     <p className="text-lg font-medium">Drop files here or click to browse</p>
                     <p className="text-sm text-gray-500">Maximum file size: 10MB per file</p>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    disabled={uploadStatus === 'uploading'}
+                  >
+                    Choose Files
+                  </Button>
                   <input
+                    id="file-upload"
                     type="file"
                     multiple
                     accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png"
                     onChange={handleFileUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    className="hidden"
                     disabled={uploadStatus === 'uploading'}
                   />
                 </div>
