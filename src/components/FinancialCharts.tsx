@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 
@@ -98,6 +98,50 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
     value: {
       label: "Value (AED M)",
       color: "#8884d8"
+    },
+    currentAssets: {
+      label: "Current Assets",
+      color: "#8884d8"
+    },
+    nonCurrentAssets: {
+      label: "Non-Current Assets",
+      color: "#82ca9d"
+    },
+    currentLiabilities: {
+      label: "Current Liabilities",
+      color: "#ffc658"
+    },
+    nonCurrentLiabilities: {
+      label: "Non-Current Liabilities",
+      color: "#ff7300"
+    },
+    revenue: {
+      label: "Revenue",
+      color: "#8884d8"
+    },
+    profit: {
+      label: "Net Profit",
+      color: "#82ca9d"
+    },
+    operating: {
+      label: "Operating",
+      color: "#22c55e"
+    },
+    investing: {
+      label: "Investing",
+      color: "#ef4444"
+    },
+    financing: {
+      label: "Financing",
+      color: "#3b82f6"
+    },
+    equity: {
+      label: "Shareholder's Equity",
+      color: "#10b981"
+    },
+    debt: {
+      label: "Total Debt",
+      color: "#f59e0b"
     }
   };
 
@@ -124,6 +168,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
                 />
                 <Bar dataKey="value" fill="#8884d8" />
+                <ChartLegend content={<ChartLegendContent />} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -152,6 +197,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 />
                 <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} name="Revenue" />
                 <Line type="monotone" dataKey="profit" stroke="#82ca9d" strokeWidth={2} name="Net Profit" />
+                <ChartLegend content={<ChartLegendContent />} />
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -187,6 +233,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   content={<ChartTooltipContent />}
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
                 />
+                <ChartLegend content={<ChartLegendContent />} />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -222,6 +269,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   content={<ChartTooltipContent />}
                   formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
                 />
+                <ChartLegend content={<ChartLegendContent />} />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
