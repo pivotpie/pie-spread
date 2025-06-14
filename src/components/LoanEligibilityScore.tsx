@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -17,13 +18,13 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   year, 
   detailed = false 
 }) => {
+  // Helper function to get reliable value or 0
+  const getValue = (ratio: any) => {
+    return ratio.isReliable ? ratio.value : 0;
+  };
+
   const calculateScore = () => {
     let score = 0;
-    
-    // Helper function to get reliable value or 0
-    const getValue = (ratio: any) => {
-      return ratio.isReliable ? ratio.value : 0;
-    };
     
     // Liquidity (25 points)
     const currentRatio = getValue(ratios.currentRatio);
@@ -192,11 +193,6 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
       status: (getValue(ratios.grossProfitMargin) >= 20 && getValue(ratios.returnOnEquity) >= 15) ? 'pass' : 'fail'
     }
   ];
-
-  // Helper function to get reliable value or 0
-  const getValue = (ratio: any) => {
-    return ratio.isReliable ? ratio.value : 0;
-  };
 
   return (
     <div className="space-y-6">
