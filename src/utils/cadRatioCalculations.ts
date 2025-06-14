@@ -1,4 +1,3 @@
-
 interface FinancialData {
   totalAssets: number;
   currentAssets: number;
@@ -30,6 +29,7 @@ interface CADSpecificRatios {
   debtToAssets: number;
   equityRatio: number;
   timesInterestEarned: number;
+  interestCoverageRatio: number;
   
   // Profitability Ratios
   returnOnAssets: number;
@@ -100,6 +100,10 @@ export const calculateCADRatios = (
     : 0;
     
   const timesInterestEarned = currentYear.interestExpense !== 0 
+    ? currentYear.ebitda / currentYear.interestExpense 
+    : 0;
+
+  const interestCoverageRatio = currentYear.interestExpense !== 0 
     ? currentYear.ebitda / currentYear.interestExpense 
     : 0;
 
@@ -179,6 +183,7 @@ export const calculateCADRatios = (
     debtToAssets,
     equityRatio,
     timesInterestEarned,
+    interestCoverageRatio,
     returnOnAssets,
     returnOnEquity,
     profitMargin,

@@ -37,12 +37,12 @@ export const DocumentImport: React.FC<DocumentImportProps> = ({ onDocumentProces
   const [processingProgress, setProcessingProgress] = useState(0);
 
   const requiredDocuments = [
-    { type: 'financial_statement', name: 'Audited Financial Statements (3 years)', required: true },
-    { type: 'bank_statement', name: 'Bank Statements (12 months)', required: true },
-    { type: 'trade_document', name: 'Trade License & Commercial Registration', required: true },
-    { type: 'commercial_invoice', name: 'Sample Commercial Invoices', required: true },
-    { type: 'bill_of_lading', name: 'Bills of Lading / Shipping Documents', required: false },
-    { type: 'insurance_document', name: 'Insurance Documents', required: false }
+    { type: 'financial_statement' as const, name: 'Audited Financial Statements (3 years)', required: true },
+    { type: 'bank_statement' as const, name: 'Bank Statements (12 months)', required: true },
+    { type: 'trade_document' as const, name: 'Trade License & Commercial Registration', required: true },
+    { type: 'commercial_invoice' as const, name: 'Sample Commercial Invoices', required: true },
+    { type: 'bill_of_lading' as const, name: 'Bills of Lading / Shipping Documents', required: false },
+    { type: 'insurance_document' as const, name: 'Insurance Documents', required: false }
   ];
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
