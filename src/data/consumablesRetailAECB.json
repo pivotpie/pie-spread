@@ -1,0 +1,99 @@
+
+{
+  "company_info": {
+    "trade_license": "DED-67890-2018",
+    "company_name": "Consumables Retail LLC",
+    "industry": "Consumables Retail",
+    "establishment_date": "2018-06-20"
+  },
+  "credit_profile": {
+    "aecb_score": 545,
+    "risk_grade": "C+",
+    "last_updated": "2024-01-15",
+    "credit_history_years": 6
+  },
+  "payment_history": {
+    "total_facilities": 15,
+    "current_facilities": 11,
+    "payment_performance": {
+      "on_time_payments": 68,
+      "late_payments_30_days": 24,
+      "late_payments_60_days": 6,
+      "late_payments_90_days": 2,
+      "defaults": 0
+    },
+    "payment_trend": "Deteriorating"
+  },
+  "credit_utilization": {
+    "total_credit_limit": 2100000,
+    "current_outstanding": 1890000,
+    "utilization_ratio": 90.0,
+    "utilization_trend": "Increasing"
+  },
+  "facility_details": [
+    {
+      "facility_type": "Working Capital",
+      "bank": "ADCB",
+      "limit": 800000,
+      "outstanding": 770000,
+      "status": "Active",
+      "days_past_due": 15
+    },
+    {
+      "facility_type": "Trade Finance - LC",
+      "bank": "FAB",
+      "limit": 600000,
+      "outstanding": 580000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Overdraft",
+      "bank": "Emirates NBD",
+      "limit": 400000,
+      "outstanding": 390000,
+      "status": "Active",
+      "days_past_due": 8
+    },
+    {
+      "facility_type": "Equipment Finance",
+      "bank": "CBD",
+      "limit": 300000,
+      "outstanding": 150000,
+      "status": "Active",
+      "days_past_due": 0
+    }
+  ],
+  "credit_inquiries": {
+    "last_12_months": 8,
+    "last_6_months": 5,
+    "recent_inquiries": [
+      {
+        "date": "2024-01-05",
+        "bank": "RAKBANK",
+        "inquiry_type": "New Facility"
+      },
+      {
+        "date": "2023-12-20",
+        "bank": "HSBC",
+        "inquiry_type": "Facility Enhancement"
+      },
+      {
+        "date": "2023-12-10",
+        "bank": "ENBD",
+        "inquiry_type": "Restructuring"
+      }
+    ]
+  },
+  "negative_information": {
+    "bounced_checks": 3,
+    "legal_cases": 1,
+    "bankruptcy_history": false,
+    "restructuring_history": true
+  },
+  "guarantor_information": {
+    "personal_guarantors": 3,
+    "corporate_guarantors": 1,
+    "guarantor_scores": [580, 620, 550, 490]
+  }
+}

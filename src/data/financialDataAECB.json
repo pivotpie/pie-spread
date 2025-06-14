@@ -1,0 +1,107 @@
+
+{
+  "company_info": {
+    "trade_license": "DED-11111-2020",
+    "company_name": "General Trading LLC",
+    "industry": "General Trading",
+    "establishment_date": "2020-01-10"
+  },
+  "credit_profile": {
+    "aecb_score": 685,
+    "risk_grade": "B+",
+    "last_updated": "2024-01-15",
+    "credit_history_years": 4
+  },
+  "payment_history": {
+    "total_facilities": 18,
+    "current_facilities": 14,
+    "payment_performance": {
+      "on_time_payments": 82,
+      "late_payments_30_days": 15,
+      "late_payments_60_days": 3,
+      "late_payments_90_days": 0,
+      "defaults": 0
+    },
+    "payment_trend": "Stable"
+  },
+  "credit_utilization": {
+    "total_credit_limit": 3200000,
+    "current_outstanding": 2080000,
+    "utilization_ratio": 65.0,
+    "utilization_trend": "Fluctuating"
+  },
+  "facility_details": [
+    {
+      "facility_type": "Trade Finance - LC",
+      "bank": "FAB",
+      "limit": 1000000,
+      "outstanding": 650000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Working Capital",
+      "bank": "Emirates NBD",
+      "limit": 800000,
+      "outstanding": 520000,
+      "status": "Active",
+      "days_past_due": 12
+    },
+    {
+      "facility_type": "Trade Finance - CAD",
+      "bank": "ADCB",
+      "limit": 700000,
+      "outstanding": 480000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Equipment Finance",
+      "bank": "RAKBANK",
+      "limit": 500000,
+      "outstanding": 320000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Overdraft",
+      "bank": "CBD",
+      "limit": 200000,
+      "outstanding": 110000,
+      "status": "Active",
+      "days_past_due": 5
+    }
+  ],
+  "credit_inquiries": {
+    "last_12_months": 6,
+    "last_6_months": 3,
+    "recent_inquiries": [
+      {
+        "date": "2024-01-08",
+        "bank": "HSBC",
+        "inquiry_type": "New Facility"
+      },
+      {
+        "date": "2023-11-25",
+        "bank": "FAB",
+        "inquiry_type": "Facility Enhancement"
+      },
+      {
+        "date": "2023-10-15",
+        "bank": "Emirates NBD",
+        "inquiry_type": "Review"
+      }
+    ]
+  },
+  "negative_information": {
+    "bounced_checks": 1,
+    "legal_cases": 0,
+    "bankruptcy_history": false,
+    "restructuring_history": false
+  },
+  "guarantor_information": {
+    "personal_guarantors": 2,
+    "corporate_guarantors": 1,
+    "guarantor_scores": [650, 720, 580]
+  }
+}

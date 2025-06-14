@@ -1,0 +1,94 @@
+
+{
+  "company_info": {
+    "trade_license": "DED-12345-2019",
+    "company_name": "Fashion Retail LLC",
+    "industry": "Fashion Retail",
+    "establishment_date": "2019-03-15"
+  },
+  "credit_profile": {
+    "aecb_score": 785,
+    "risk_grade": "A",
+    "last_updated": "2024-01-15",
+    "credit_history_years": 5
+  },
+  "payment_history": {
+    "total_facilities": 12,
+    "current_facilities": 8,
+    "payment_performance": {
+      "on_time_payments": 94,
+      "late_payments_30_days": 6,
+      "late_payments_60_days": 0,
+      "late_payments_90_days": 0,
+      "defaults": 0
+    },
+    "payment_trend": "Improving"
+  },
+  "credit_utilization": {
+    "total_credit_limit": 2500000,
+    "current_outstanding": 790000,
+    "utilization_ratio": 31.6,
+    "utilization_trend": "Stable"
+  },
+  "facility_details": [
+    {
+      "facility_type": "Trade Finance - LC",
+      "bank": "Emirates NBD",
+      "limit": 800000,
+      "outstanding": 240000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Working Capital",
+      "bank": "ADCB",
+      "limit": 600000,
+      "outstanding": 180000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Equipment Finance",
+      "bank": "FAB",
+      "limit": 500000,
+      "outstanding": 320000,
+      "status": "Active",
+      "days_past_due": 0
+    },
+    {
+      "facility_type": "Overdraft",
+      "bank": "RAKBANK",
+      "limit": 300000,
+      "outstanding": 50000,
+      "status": "Active",
+      "days_past_due": 0
+    }
+  ],
+  "credit_inquiries": {
+    "last_12_months": 3,
+    "last_6_months": 1,
+    "recent_inquiries": [
+      {
+        "date": "2024-01-10",
+        "bank": "Emirates NBD",
+        "inquiry_type": "Facility Enhancement"
+      },
+      {
+        "date": "2023-11-15",
+        "bank": "HSBC",
+        "inquiry_type": "New Facility"
+      }
+    ]
+  },
+  "negative_information": {
+    "bounced_checks": 0,
+    "legal_cases": 0,
+    "bankruptcy_history": false,
+    "restructuring_history": false
+  },
+  "guarantor_information": {
+    "personal_guarantors": 2,
+    "corporate_guarantors": 0,
+    "guarantor_scores": [720, 680]
+  }
+}
