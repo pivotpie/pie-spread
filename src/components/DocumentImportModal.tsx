@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
   Camera,
   Scan
 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 interface DocumentImportModalProps {
   isOpen: boolean;
@@ -50,23 +50,44 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
     }
   };
 
-  const handleSampleDataLoad = (datasetType: 'manufacturing' | 'fashion' | 'consumables') => {
-    setUploadStatus('uploading');
-    setTimeout(() => {
-      let dataPath = '@/data/financialData.json';
+  const handleSampleDataLoad = async (datasetType: 'manufacturing' | 'fashion' | 'consumables') => {
+    try {
+      setUploadStatus('uploading');
       
-      if (datasetType === 'fashion') {
-        dataPath = '@/data/fashionRetailData.json';
+      let data;
+      
+      if (datasetType === 'manufacturing') {
+        data = await import('@/data/financialData.json');
+      } else if (datasetType === 'fashion') {
+        data = await import('@/data/fashionRetailData.json');
       } else if (datasetType === 'consumables') {
-        dataPath = '@/data/consumablesRetailData.json';
+        data = await import('@/data/consumablesRetailData.json');
       }
       
-      import(dataPath).then((data) => {
+      if (data) {
         onDataImported(data.default);
         onClose();
-        setUploadStatus('idle');
+        toast({
+          title: "Data Loaded Successfully",
+          description: `${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)} dataset has been loaded.`
+        });
+      }
+      
+      setUploadStatus('idle');
+    } catch (error) {
+      console.error('Error loading sample data:', error);
+      setUploadStatus('error');
+      toast({
+        title: "Error Loading Data",
+        description: "Failed to load the selected dataset. Please try again.",
+        variant: "destructive"
       });
-    }, 1000);
+      
+      // Reset status after showing error
+      setTimeout(() => {
+        setUploadStatus('idle');
+      }, 3000);
+    }
   };
 
   const documentTypes = [
