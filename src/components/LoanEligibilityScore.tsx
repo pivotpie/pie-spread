@@ -274,21 +274,50 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
             </Alert>
           )}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-4xl font-bold flex items-center gap-2">
-                {score}
-                <span className="text-xl text-gray-500">/100</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Eligibility Score Section */}
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-4xl font-bold flex items-center gap-2">
+                  {score}
+                  <span className="text-xl text-gray-500">/100</span>
+                </div>
+                <Badge className={`mt-2 ${scoreData.color} text-white`}>
+                  {scoreData.category}
+                </Badge>
+                <div className="mt-4">
+                  <Progress value={score} className="h-3" />
+                  <p className={`text-sm mt-2 ${scoreData.textColor} font-medium`}>
+                    {scoreData.recommendation}
+                  </p>
+                </div>
               </div>
-              <Badge className={`mt-2 ${scoreData.color} text-white`}>
-                {scoreData.category}
-              </Badge>
             </div>
-            <div className="w-1/2">
-              <Progress value={score} className="h-3" />
-              <p className={`text-sm mt-2 ${scoreData.textColor} font-medium`}>
-                {scoreData.recommendation}
-              </p>
+
+            {/* Suggested Loan Amount Section */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border-2 border-green-200">
+              <div className="flex items-center gap-3 mb-4">
+                <DollarSign className="h-6 w-6 text-green-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Suggested Loan Amount</h3>
+                  <p className="text-sm text-gray-600">Based on financial analysis</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">
+                  AED {calculateInitialLoanSuggestion.suggestedAmount.toLocaleString()}
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
+                  <div>
+                    <div className="font-semibold">Interest Rate</div>
+                    <div className="text-lg text-green-600">{calculateInitialLoanSuggestion.interestRate}%</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Term</div>
+                    <div className="text-lg text-green-600">{calculateInitialLoanSuggestion.repaymentTermYears} years</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
