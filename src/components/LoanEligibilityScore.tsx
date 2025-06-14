@@ -47,6 +47,8 @@ interface LoanEligibilityScoreProps {
 }
 
 export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ ratios, year }) => {
+  console.log('LoanEligibilityScore rendering with ratios:', ratios, 'year:', year);
+  
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [loanParams, setLoanParams] = useState({
     loanAmount: 0,
@@ -147,6 +149,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
   };
 
   const { score, factors, hasAECB } = calculateEnhancedScore();
+  console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -279,6 +282,9 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
   const suggestedRate = getLoanRate(score);
   const suggestedTerm = getLoanTerm(score);
 
+  console.log('Suggested loan details:', { suggestedAmount, suggestedRate, suggestedTerm });
+  console.log('Payability data generated:', payabilityData);
+
   const handleLoanParamsChange = (params: any) => {
     setLoanParams(params);
   };
@@ -399,7 +405,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
         </div>
       )}
 
-      {/* Payability Score Visualization */}
+      {/* Payability Score Timeline */}
       <Card className="mt-8 bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
         <CardHeader>
           <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
