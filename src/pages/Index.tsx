@@ -16,7 +16,8 @@ import {
   BarChart3,
   FileSpreadsheet,
   CreditCard,
-  Upload
+  Upload,
+  Building
 } from 'lucide-react';
 import { FinancialTable } from '@/components/FinancialTable';
 import { RatioAnalysis } from '@/components/RatioAnalysis';
@@ -25,6 +26,7 @@ import { LoanEligibilityScore } from '@/components/LoanEligibilityScore';
 import { BlankState } from '@/components/BlankState';
 import { DocumentImportModal } from '@/components/DocumentImportModal';
 import { FinancialCharts } from '@/components/FinancialCharts';
+import { AECBAnalysis } from '@/components/AECBAnalysis';
 import { calculateRobustRatios } from '@/utils/ratioCalculations';
 
 interface FinancialItem {
@@ -44,6 +46,7 @@ interface FinancialData {
 const Index = () => {
   const [selectedYear, setSelectedYear] = useState<number>(2023);
   const [data, setData] = useState<FinancialData | null>(null);
+  const [aecbData, setAecbData] = useState<any>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   
   const years = useMemo(() => {
@@ -57,7 +60,13 @@ const Index = () => {
 
   const handleDataImported = (importedData: FinancialData) => {
     setData(importedData);
+    
+    // Auto-load corresponding AECB data based on company type
     if (importedData) {
+      // Detect company type and load appropriate AECB data
+      const companyName = "General Trading LLC"; // This would be detected from the data
+      loadAECBData(companyName);
+      
       // Set the most recent year as default
       const allYears = new Set<number>();
       Object.values(importedData).forEach(items => 
@@ -67,6 +76,23 @@ const Index = () => {
       if (sortedYears.length > 0) {
         setSelectedYear(sortedYears[sortedYears.length - 1]);
       }
+    }
+  };
+
+  const loadAECBData = async (companyIdentifier: string) => {
+    try {
+      let aecbDataModule;
+      // Map company names to AECB data files
+      if (companyIdentifier.includes('Fashion')) {
+        aecbDataModule = await import('@/data/fashionRetailAECB.json');
+      } else if (companyIdentifier.includes('Consumables')) {
+        aecbDataModule = await import('@/data/consumablesRetailAECB.json');
+      } else {
+        aecbDataModule = await import('@/data/financialDataAECB.json');
+      }
+      setAecbData(aecbDataModule.default);
+    } catch (error) {
+      console.error('Failed to load AECB data:', error);
     }
   };
 
@@ -114,6 +140,25 @@ const Index = () => {
   };
 
   const currentRatios = calculateRatios(selectedYear);
+
+  // Enhanced scoring that includes AECB data
+  const enhancedRatios = useMemo(() => {
+    if (!aecbData) return currentRatios;
+    
+    // Add AECB-based enhancements to the ratios
+    return {
+      ...currentRatios,
+      aecbScore: aecbData.credit_profile.aecb_score,
+      riskGrade: aecbData.credit_profile.risk_grade,
+      paymentPerformance: aecbData.payment_history.payment_performance.on_time_payments,
+      creditUtilization: aecbData.credit_utilization.utilization_ratio,
+      negativeFactors: {
+        bouncedChecks: aecbData.negative_information.bounced_checks,
+        legalCases: aecbData.negative_information.legal_cases,
+        restructuring: aecbData.negative_information.restructuring_history
+      }
+    };
+  }, [currentRatios, aecbData]);
 
   // Show blank state if no data is loaded
   if (!data) {
@@ -170,12 +215,18 @@ const Index = () => {
               <CreditCard className="h-5 w-5 mr-2" />
               CAD Assessment
             </Badge>
+            {aecbData && (
+              <Badge variant="outline" className="px-4 py-2 border-2 border-purple-200 bg-purple-50 text-purple-700 rounded-xl shadow-sm">
+                <Building className="h-5 w-5 mr-2" />
+                AECB Connected
+              </Badge>
+            )}
           </div>
         </div>
 
         {/* Loan Eligibility Score */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
-          <LoanEligibilityScore ratios={currentRatios} year={selectedYear} />
+          <LoanEligibilityScore ratios={enhancedRatios} year={selectedYear} />
         </div>
 
         {/* Key Metrics Overview */}
@@ -258,16 +309,17 @@ const Index = () => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
           <Tabs defaultValue="ratios" className="w-full">
             <div className="border-b border-slate-200 bg-slate-50/50 px-8 py-6">
-              <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl p-2 shadow-sm">
+              <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl p-2 shadow-sm">
                 <TabsTrigger value="ratios" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Ratio Analysis</TabsTrigger>
                 <TabsTrigger value="statements" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Financial Statements</TabsTrigger>
                 <TabsTrigger value="trends" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Trend Analysis</TabsTrigger>
+                <TabsTrigger value="credit-bureau" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Credit Bureau</TabsTrigger>
               </TabsList>
             </div>
 
             <div className="p-8">
               <TabsContent value="ratios">
-                <RatioAnalysis ratios={currentRatios} year={selectedYear} />
+                <RatioAnalysis ratios={enhancedRatios} year={selectedYear} />
               </TabsContent>
 
               <TabsContent value="statements" className="space-y-8">
@@ -315,6 +367,10 @@ const Index = () => {
 
               <TabsContent value="trends">
                 <TrendChart data={data} years={years} />
+              </TabsContent>
+
+              <TabsContent value="credit-bureau">
+                <AECBAnalysis data={aecbData} />
               </TabsContent>
             </div>
           </Tabs>

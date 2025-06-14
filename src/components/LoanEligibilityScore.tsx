@@ -1,543 +1,319 @@
-import React, { useState, useMemo } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { CheckCircle, XCircle, AlertTriangle, Shield, TrendingUp, DollarSign, Calculator } from 'lucide-react';
-import { RobustRatios } from '@/utils/ratioCalculations';
-import { EditableLoanForm } from './EditableLoanForm';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Calculator, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle,
+  CreditCard,
+  Building,
+  Star
+} from 'lucide-react';
 
-interface LoanEligibilityScoreProps {
-  ratios: RobustRatios;
-  year: number;
-  detailed?: boolean;
+interface EnhancedRatios {
+  currentRatio: { value: number; isReliable: boolean };
+  quickRatio: { value: number; isReliable: boolean };
+  debtToEquity: { value: number; isReliable: boolean };
+  grossProfitMargin: { value: number; isReliable: boolean };
+  netProfitMargin: { value: number; isReliable: boolean };
+  returnOnAssets: { value: number; isReliable: boolean };
+  returnOnEquity: { value: number; isReliable: boolean };
+  aecbScore?: number;
+  riskGrade?: string;
+  paymentPerformance?: number;
+  creditUtilization?: number;
+  negativeFactors?: {
+    bouncedChecks: number;
+    legalCases: number;
+    restructuring: boolean;
+  };
 }
 
-export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ 
-  ratios, 
-  year, 
-  detailed = false 
-}) => {
-  // Helper function to get reliable value or 0
-  const getValue = (ratio: any) => {
-    return ratio.isReliable ? ratio.value : 0;
-  };
+interface LoanEligibilityScoreProps {
+  ratios: EnhancedRatios;
+  year: number;
+}
 
-  const calculateScore = () => {
+export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ ratios, year }) => {
+  // Enhanced scoring algorithm that includes AECB data
+  const calculateEnhancedScore = () => {
     let score = 0;
-    
-    // Liquidity (25 points)
-    const currentRatio = getValue(ratios.currentRatio);
-    if (currentRatio >= 2.0) score += 10;
-    else if (currentRatio >= 1.5) score += 7;
-    else if (currentRatio >= 1.0) score += 4;
-    
-    const quickRatio = getValue(ratios.quickRatio);
-    if (quickRatio >= 1.0) score += 8;
-    else if (quickRatio >= 0.8) score += 5;
-    else if (quickRatio >= 0.5) score += 2;
-    
-    const cashRatio = getValue(ratios.cashRatio);
-    if (cashRatio >= 0.5) score += 7;
-    else if (cashRatio >= 0.2) score += 4;
-    else if (cashRatio >= 0.1) score += 2;
-    
-    // Leverage (20 points)
-    const debtToEquity = getValue(ratios.debtToEquity);
-    if (debtToEquity > 0 && debtToEquity <= 1.0) score += 10;
-    else if (debtToEquity > 0 && debtToEquity <= 2.0) score += 7;
-    else if (debtToEquity > 0 && debtToEquity <= 3.0) score += 3;
-    
-    const capitalAdequacy = getValue(ratios.capitalAdequacy);
-    if (capitalAdequacy >= 50) score += 10;
-    else if (capitalAdequacy >= 30) score += 6;
-    else if (capitalAdequacy >= 20) score += 3;
-    
-    // Profitability (25 points)
-    const netProfitMargin = getValue(ratios.netProfitMargin);
-    if (netProfitMargin >= 10) score += 8;
-    else if (netProfitMargin >= 5) score += 5;
-    else if (netProfitMargin >= 2) score += 2;
-    
-    const returnOnAssets = getValue(ratios.returnOnAssets);
-    if (returnOnAssets >= 15) score += 8;
-    else if (returnOnAssets >= 10) score += 5;
-    else if (returnOnAssets >= 5) score += 2;
-    
-    const operatingMargin = getValue(ratios.operatingMargin);
-    if (operatingMargin >= 15) score += 9;
-    else if (operatingMargin >= 8) score += 6;
-    else if (operatingMargin >= 5) score += 3;
-    
-    // Efficiency & Coverage (20 points)
-    const interestCoverage = getValue(ratios.interestCoverage);
-    if (interestCoverage >= 5.0) score += 8;
-    else if (interestCoverage >= 2.5) score += 5;
-    else if (interestCoverage >= 1.5) score += 2;
-    
-    const assetTurnover = getValue(ratios.assetTurnover);
-    if (assetTurnover >= 1.5) score += 6;
-    else if (assetTurnover >= 1.0) score += 4;
-    else if (assetTurnover >= 0.5) score += 2;
-    
-    const inventoryTurnover = getValue(ratios.inventoryTurnover);
-    if (inventoryTurnover >= 6.0) score += 6;
-    else if (inventoryTurnover >= 4.0) score += 4;
-    else if (inventoryTurnover >= 2.0) score += 2;
-    
-    // Market Performance (10 points)
-    const grossProfitMargin = getValue(ratios.grossProfitMargin);
-    if (grossProfitMargin >= 30) score += 5;
-    else if (grossProfitMargin >= 20) score += 3;
-    else if (grossProfitMargin >= 15) score += 1;
-    
-    const returnOnEquity = getValue(ratios.returnOnEquity);
-    if (returnOnEquity >= 20) score += 5;
-    else if (returnOnEquity >= 15) score += 3;
-    else if (returnOnEquity >= 10) score += 1;
-    
-    return Math.round(score);
-  };
+    let maxScore = 0;
+    const factors: Array<{ name: string; score: number; maxScore: number; weight: number }> = [];
 
-  // Calculate initial suggested loan values
-  const calculateInitialLoanSuggestion = useMemo(() => {
-    const netProfitMargin = getValue(ratios.netProfitMargin);
-    const returnOnAssets = getValue(ratios.returnOnAssets);
-    const currentRatio = getValue(ratios.currentRatio);
-    const debtToEquity = getValue(ratios.debtToEquity);
-    
-    // Base loan calculation (simplified for demonstration)
-    // In practice, this would require actual revenue and net profit values
-    const baseAmount = 120000; // Base amount in AED
-    
-    // Adjust based on ratios
-    let adjustmentFactor = 1.0;
-    
-    if (netProfitMargin >= 10) adjustmentFactor += 0.3;
-    else if (netProfitMargin >= 5) adjustmentFactor += 0.1;
-    
-    if (currentRatio >= 2.0) adjustmentFactor += 0.2;
-    else if (currentRatio >= 1.5) adjustmentFactor += 0.1;
-    
-    if (debtToEquity <= 1.0) adjustmentFactor += 0.2;
-    else if (debtToEquity <= 2.0) adjustmentFactor += 0.1;
-    
-    if (returnOnAssets >= 15) adjustmentFactor += 0.2;
-    else if (returnOnAssets >= 10) adjustmentFactor += 0.1;
-    
-    const suggestedAmount = Math.round(baseAmount * adjustmentFactor);
-    
-    // Calculate interest rate based on risk profile
-    let interestRate = 12; // Base rate
-    const score = calculateScore();
-    
-    if (score >= 85) interestRate = 8;
-    else if (score >= 70) interestRate = 10;
-    else if (score >= 55) interestRate = 12;
-    else interestRate = 15;
-    
-    const repaymentTermYears = 3;
-    
-    return {
-      suggestedAmount,
-      repaymentTermYears,
-      interestRate
-    };
-  }, [ratios]);
+    // Financial Ratios (60% weight when AECB available, 100% when not)
+    const hasAECB = ratios.aecbScore !== undefined;
+    const financialWeight = hasAECB ? 0.6 : 1.0;
 
-  // State for current loan parameters
-  const [currentLoanParams, setCurrentLoanParams] = useState({
-    loanAmount: calculateInitialLoanSuggestion.suggestedAmount,
-    interestRate: calculateInitialLoanSuggestion.interestRate,
-    repaymentTermYears: calculateInitialLoanSuggestion.repaymentTermYears,
-    monthlyEMI: 0
-  });
-
-  // Enhanced payability analysis calculations
-  const payabilityAnalysis = useMemo(() => {
-    const score = calculateScore();
-    const totalMonths = currentLoanParams.repaymentTermYears * 12;
-    
-    // Calculate financial health indicators for each quarter
-    const quarters = Math.ceil(totalMonths / 3); // 3-month quarters
-    const quarterlyData = [];
-    
-    // Base financial health metrics
-    const liquidityScore = Math.min(100, (getValue(ratios.currentRatio) / 2.0) * 100);
-    const leverageScore = Math.max(0, 100 - (getValue(ratios.debtToEquity) / 3.0) * 100);
-    const profitabilityScore = Math.min(100, (getValue(ratios.netProfitMargin) / 15) * 100);
-    const coverageScore = Math.min(100, (getValue(ratios.interestCoverage) / 5.0) * 100);
-    
-    for (let i = 0; i < quarters; i++) {
-      const quarterProgress = i / quarters;
-      
-      // Simulate slight deterioration over time due to market conditions
-      const timeDecay = 1 - (quarterProgress * 0.1); // 10% potential decline over term
-      
-      // Calculate composite health score for this quarter
-      const compositeHealth = (
-        liquidityScore * 0.3 + 
-        leverageScore * 0.25 + 
-        profitabilityScore * 0.25 + 
-        coverageScore * 0.2
-      ) * timeDecay;
-      
-      // Add some realistic variation based on business cycles
-      const cyclicalVariation = Math.sin(quarterProgress * Math.PI * 2) * 5;
-      const finalHealth = Math.max(20, Math.min(100, compositeHealth + cyclicalVariation));
-      
-      // Determine risk level
-      let riskLevel: 'low' | 'medium' | 'high';
-      if (finalHealth >= 70) riskLevel = 'low';
-      else if (finalHealth >= 50) riskLevel = 'medium';
-      else riskLevel = 'high';
-      
-      quarterlyData.push({
-        quarter: i + 1,
-        healthScore: finalHealth,
-        riskLevel,
-        quarterLabel: `Q${(i % 4) + 1} Y${Math.floor(i / 4) + 1}`,
-        cumulativePayment: (i + 1) * 3 * currentLoanParams.monthlyEMI
-      });
+    // Current Ratio (Liquidity)
+    if (ratios.currentRatio.isReliable) {
+      const currentRatioScore = Math.min(Math.max((ratios.currentRatio.value - 0.5) * 20, 0), 20);
+      factors.push({ name: 'Current Ratio', score: currentRatioScore, maxScore: 20, weight: financialWeight });
+      score += currentRatioScore * financialWeight;
     }
-    
-    return quarterlyData;
-  }, [ratios, currentLoanParams]);
+    maxScore += 20 * financialWeight;
 
-  const score = calculateScore();
-  
-  const getScoreCategory = (score: number) => {
-    if (score >= 85) return {
-      category: 'Excellent',
-      color: 'bg-green-500',
-      textColor: 'text-green-700',
-      bgColor: 'bg-green-50',
-      recommendation: 'Highly recommended for CAD loan approval with premium terms',
-      icon: <CheckCircle className="h-5 w-5 text-green-500" />
-    };
-    if (score >= 70) return {
-      category: 'Good',
-      color: 'bg-blue-500',
-      textColor: 'text-blue-700',
-      bgColor: 'bg-blue-50',
-      recommendation: 'Favorable for CAD loan approval with standard terms',
-      icon: <TrendingUp className="h-5 w-5 text-blue-500" />
-    };
-    if (score >= 55) return {
-      category: 'Fair',
-      color: 'bg-yellow-500',
-      textColor: 'text-yellow-700',
-      bgColor: 'bg-yellow-50',
-      recommendation: 'Conditional approval - additional collateral recommended',
-      icon: <AlertTriangle className="h-5 w-5 text-yellow-500" />
-    };
+    // Debt-to-Equity (Leverage)
+    if (ratios.debtToEquity.isReliable) {
+      const debtEquityScore = Math.max(20 - (ratios.debtToEquity.value * 5), 0);
+      factors.push({ name: 'Debt-to-Equity', score: debtEquityScore, maxScore: 20, weight: financialWeight });
+      score += debtEquityScore * financialWeight;
+    }
+    maxScore += 20 * financialWeight;
+
+    // Profitability
+    if (ratios.netProfitMargin.isReliable) {
+      const profitabilityScore = Math.min(Math.max(ratios.netProfitMargin.value * 2, 0), 15);
+      factors.push({ name: 'Net Profit Margin', score: profitabilityScore, maxScore: 15, weight: financialWeight });
+      score += profitabilityScore * financialWeight;
+    }
+    maxScore += 15 * financialWeight;
+
+    // Return on Assets
+    if (ratios.returnOnAssets.isReliable) {
+      const roaScore = Math.min(Math.max(ratios.returnOnAssets.value * 1.5, 0), 15);
+      factors.push({ name: 'Return on Assets', score: roaScore, maxScore: 15, weight: financialWeight });
+      score += roaScore * financialWeight;
+    }
+    maxScore += 15 * financialWeight;
+
+    // AECB Factors (40% weight when available)
+    if (hasAECB) {
+      const aecbWeight = 0.4;
+
+      // AECB Credit Score (most important factor)
+      if (ratios.aecbScore) {
+        const aecbScore = ((ratios.aecbScore - 300) / (850 - 300)) * 25; // Normalize to 0-25
+        factors.push({ name: 'AECB Credit Score', score: Math.max(aecbScore, 0), maxScore: 25, weight: aecbWeight });
+        score += Math.max(aecbScore, 0) * aecbWeight;
+      }
+      maxScore += 25 * aecbWeight;
+
+      // Payment Performance
+      if (ratios.paymentPerformance !== undefined) {
+        const paymentScore = (ratios.paymentPerformance / 100) * 20;
+        factors.push({ name: 'Payment Performance', score: paymentScore, maxScore: 20, weight: aecbWeight });
+        score += paymentScore * aecbWeight;
+      }
+      maxScore += 20 * aecbWeight;
+
+      // Credit Utilization (lower is better)
+      if (ratios.creditUtilization !== undefined) {
+        const utilizationScore = Math.max(15 - (ratios.creditUtilization / 100) * 15, 0);
+        factors.push({ name: 'Credit Utilization', score: utilizationScore, maxScore: 15, weight: aecbWeight });
+        score += utilizationScore * aecbWeight;
+      }
+      maxScore += 15 * aecbWeight;
+
+      // Negative Factors (deductions)
+      if (ratios.negativeFactors) {
+        let negativeDeduction = 0;
+        negativeDeduction += ratios.negativeFactors.bouncedChecks * 2; // 2 points per bounced check
+        negativeDeduction += ratios.negativeFactors.legalCases * 3; // 3 points per legal case
+        if (ratios.negativeFactors.restructuring) negativeDeduction += 5; // 5 points for restructuring
+
+        factors.push({ name: 'Negative Factors', score: -negativeDeduction, maxScore: 0, weight: aecbWeight });
+        score -= negativeDeduction * aecbWeight;
+      }
+    }
+
+    const finalScore = maxScore > 0 ? Math.max((score / maxScore) * 100, 0) : 0;
+    
     return {
-      category: 'Poor',
-      color: 'bg-red-500',
-      textColor: 'text-red-700',
-      bgColor: 'bg-red-50',
-      recommendation: 'High risk - loan approval unlikely without guarantees',
-      icon: <XCircle className="h-5 w-5 text-red-500" />
+      score: Math.min(finalScore, 100),
+      factors,
+      hasAECB
     };
   };
 
-  const scoreData = getScoreCategory(score);
+  const { score, factors, hasAECB } = calculateEnhancedScore();
 
-  const criteriaAnalysis = [
-    {
-      name: 'Liquidity',
-      weight: 25,
-      score: Math.min(25, 
-        (getValue(ratios.currentRatio) >= 2.0 ? 10 : getValue(ratios.currentRatio) >= 1.5 ? 7 : getValue(ratios.currentRatio) >= 1.0 ? 4 : 0) +
-        (getValue(ratios.quickRatio) >= 1.0 ? 8 : getValue(ratios.quickRatio) >= 0.8 ? 5 : getValue(ratios.quickRatio) >= 0.5 ? 2 : 0) +
-        (getValue(ratios.cashRatio) >= 0.5 ? 7 : getValue(ratios.cashRatio) >= 0.2 ? 4 : getValue(ratios.cashRatio) >= 0.1 ? 2 : 0)
-      ),
-      metrics: `Current: ${ratios.currentRatio.isReliable ? getValue(ratios.currentRatio).toFixed(2) : 'N/A'}, Quick: ${ratios.quickRatio.isReliable ? getValue(ratios.quickRatio).toFixed(2) : 'N/A'}, Cash: ${ratios.cashRatio.isReliable ? getValue(ratios.cashRatio).toFixed(2) : 'N/A'}`,
-      status: (getValue(ratios.currentRatio) >= 1.5 && getValue(ratios.quickRatio) >= 0.8 && ratios.currentRatio.isReliable && ratios.quickRatio.isReliable) ? 'pass' : 'fail'
-    },
-    {
-      name: 'Leverage',
-      weight: 20,
-      score: Math.min(20,
-        (getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 1.0 ? 10 : getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 2.0 ? 7 : getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 3.0 ? 3 : 0) +
-        (getValue(ratios.capitalAdequacy) >= 50 ? 10 : getValue(ratios.capitalAdequacy) >= 30 ? 6 : getValue(ratios.capitalAdequacy) >= 20 ? 3 : 0)
-      ),
-      metrics: `D/E: ${ratios.debtToEquity.isReliable ? getValue(ratios.debtToEquity).toFixed(2) : 'N/A'}, Capital Adequacy: ${ratios.capitalAdequacy.isReliable ? getValue(ratios.capitalAdequacy).toFixed(1) : 'N/A'}%`,
-      status: (getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 2.0 && getValue(ratios.capitalAdequacy) >= 30) ? 'pass' : 'fail'
-    },
-    {
-      name: 'Profitability',
-      weight: 25,
-      score: Math.min(25,
-        (getValue(ratios.netProfitMargin) >= 10 ? 8 : getValue(ratios.netProfitMargin) >= 5 ? 5 : getValue(ratios.netProfitMargin) >= 2 ? 2 : 0) +
-        (getValue(ratios.returnOnAssets) >= 15 ? 8 : getValue(ratios.returnOnAssets) >= 10 ? 5 : getValue(ratios.returnOnAssets) >= 5 ? 2 : 0) +
-        (getValue(ratios.operatingMargin) >= 15 ? 9 : getValue(ratios.operatingMargin) >= 8 ? 6 : getValue(ratios.operatingMargin) >= 5 ? 3 : 0)
-      ),
-      metrics: `Net Margin: ${ratios.netProfitMargin.isReliable ? getValue(ratios.netProfitMargin).toFixed(1) : 'N/A'}%, ROA: ${ratios.returnOnAssets.isReliable ? getValue(ratios.returnOnAssets).toFixed(1) : 'N/A'}%`,
-      status: (getValue(ratios.netProfitMargin) >= 5 && getValue(ratios.returnOnAssets) >= 10) ? 'pass' : 'fail'
-    },
-    {
-      name: 'Efficiency & Coverage',
-      weight: 20,
-      score: Math.min(20,
-        (getValue(ratios.interestCoverage) >= 5.0 ? 8 : getValue(ratios.interestCoverage) >= 2.5 ? 5 : getValue(ratios.interestCoverage) >= 1.5 ? 2 : 0) +
-        (getValue(ratios.assetTurnover) >= 1.5 ? 6 : getValue(ratios.assetTurnover) >= 1.0 ? 4 : getValue(ratios.assetTurnover) >= 0.5 ? 2 : 0) +
-        (getValue(ratios.inventoryTurnover) >= 6.0 ? 6 : getValue(ratios.inventoryTurnover) >= 4.0 ? 4 : getValue(ratios.inventoryTurnover) >= 2.0 ? 2 : 0)
-      ),
-      metrics: `Interest Coverage: ${ratios.interestCoverage.isReliable ? getValue(ratios.interestCoverage).toFixed(1) : 'N/A'}, Asset Turnover: ${ratios.assetTurnover.isReliable ? getValue(ratios.assetTurnover).toFixed(2) : 'N/A'}`,
-      status: (getValue(ratios.interestCoverage) >= 2.5 && getValue(ratios.assetTurnover) >= 1.0) ? 'pass' : 'fail'
-    },
-    {
-      name: 'Market Performance',
-      weight: 10,
-      score: Math.min(10,
-        (getValue(ratios.grossProfitMargin) >= 30 ? 5 : getValue(ratios.grossProfitMargin) >= 20 ? 3 : getValue(ratios.grossProfitMargin) >= 15 ? 1 : 0) +
-        (getValue(ratios.returnOnEquity) >= 20 ? 5 : getValue(ratios.returnOnEquity) >= 15 ? 3 : getValue(ratios.returnOnEquity) >= 10 ? 1 : 0)
-      ),
-      metrics: `Gross Margin: ${ratios.grossProfitMargin.isReliable ? getValue(ratios.grossProfitMargin).toFixed(1) : 'N/A'}%, ROE: ${ratios.returnOnEquity.isReliable ? getValue(ratios.returnOnEquity).toFixed(1) : 'N/A'}%`,
-      status: (getValue(ratios.grossProfitMargin) >= 20 && getValue(ratios.returnOnEquity) >= 15) ? 'pass' : 'fail'
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-blue-600';
+    if (score >= 40) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBadge = (score: number) => {
+    if (score >= 80) return <Badge className="bg-green-500">Excellent</Badge>;
+    if (score >= 60) return <Badge className="bg-blue-500">Good</Badge>;
+    if (score >= 40) return <Badge className="bg-yellow-500">Fair</Badge>;
+    return <Badge variant="destructive">Poor</Badge>;
+  };
+
+  const getRecommendation = (score: number, hasAECB: boolean) => {
+    if (!hasAECB) {
+      return {
+        message: "Consider obtaining AECB data for more accurate risk assessment",
+        icon: <AlertTriangle className="h-5 w-5 text-yellow-500" />,
+        type: "warning" as const
+      };
     }
-  ];
+
+    if (score >= 80) {
+      return {
+        message: "Strong candidate for CAD facility approval",
+        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+        type: "success" as const
+      };
+    }
+    if (score >= 60) {
+      return {
+        message: "Moderate risk - additional collateral recommended",
+        icon: <AlertTriangle className="h-5 w-5 text-blue-500" />,
+        type: "info" as const
+      };
+    }
+    if (score >= 40) {
+      return {
+        message: "Higher risk - enhanced due diligence required",
+        icon: <AlertTriangle className="h-5 w-5 text-yellow-500" />,
+        type: "warning" as const
+      };
+    }
+    return {
+      message: "High risk - facility approval not recommended",
+      icon: <XCircle className="h-5 w-5 text-red-500" />,
+      type: "error" as const
+    };
+  };
+
+  const getLoanAmount = (score: number) => {
+    const baseAmount = 1000000; // 1M AED base
+    const multiplier = Math.max(score / 100 * 3, 0.5); // 0.5x to 3x based on score
+    return Math.round(baseAmount * multiplier);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `AED ${(amount / 1000000).toFixed(2)}M`;
+  };
+
+  const recommendation = getRecommendation(score, hasAECB);
+  const suggestedAmount = getLoanAmount(score);
 
   return (
-    <div className="space-y-6">
-      <Card className={`border-2 ${scoreData.bgColor}`}>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="h-6 w-6 text-blue-600" />
-              <div>
-                <CardTitle className="text-xl">CAD Loan Eligibility Score</CardTitle>
-                <CardDescription>Comprehensive trade finance assessment for year {year}</CardDescription>
-              </div>
+    <div className="p-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent mb-2">
+          {hasAECB ? 'Enhanced' : 'Basic'} Loan Eligibility Assessment
+        </h2>
+        <p className="text-slate-600 text-lg">
+          {hasAECB ? 'Comprehensive analysis including AECB credit bureau data' : 'Financial analysis based on statements only'}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Score Display */}
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl rounded-2xl overflow-hidden">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
+              <Star className="h-6 w-6 text-yellow-500" />
+              Eligibility Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className={`text-6xl font-bold mb-4 ${getScoreColor(score)}`}>
+              {score.toFixed(0)}
             </div>
-            {scoreData.icon}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Data Quality Warning */}
-          {!ratios.dataQuality.isValid && (
-            <Alert className="border-orange-200 bg-orange-50">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
-              <AlertDescription className="text-orange-800">
-                <strong>Data Quality Issues Detected:</strong> Some calculations may be unreliable due to data inconsistencies. Review the detailed analysis below.
+            <div className="mb-4">
+              {getScoreBadge(score)}
+            </div>
+            <Progress value={score} className="mb-4" />
+            <div className="text-slate-600 text-sm">
+              Based on {hasAECB ? 'financial + credit bureau' : 'financial statements only'} analysis
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Suggested Loan Amount */}
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 shadow-xl rounded-2xl overflow-hidden">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
+              <DollarSign className="h-6 w-6 text-green-500" />
+              Suggested CAD Limit
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="text-4xl font-bold text-green-600 mb-4">
+              {formatCurrency(suggestedAmount)}
+            </div>
+            {hasAECB && ratios.aecbScore && (
+              <div className="mb-4">
+                <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
+                  <CreditCard className="h-4 w-4 mr-1" />
+                  AECB Score: {ratios.aecbScore}
+                </Badge>
+              </div>
+            )}
+            <div className="text-slate-600 text-sm">
+              Recommended facility limit based on risk assessment
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recommendation */}
+        <Card className="bg-gradient-to-br from-slate-50 to-gray-50 border-2 border-slate-200 shadow-xl rounded-2xl overflow-hidden">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
+              {recommendation.icon}
+              Recommendation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Alert className="mb-4">
+              <AlertDescription className="text-base font-medium">
+                {recommendation.message}
               </AlertDescription>
             </Alert>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Eligibility Score Section */}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-4xl font-bold flex items-center gap-2">
-                  {score}
-                  <span className="text-xl text-gray-500">/100</span>
-                </div>
-                <Badge className={`mt-2 ${scoreData.color} text-white`}>
-                  {scoreData.category}
+            {hasAECB && ratios.riskGrade && (
+              <div className="mb-4">
+                <Badge variant="outline" className="text-lg px-4 py-2">
+                  Risk Grade: {ratios.riskGrade}
                 </Badge>
-                <div className="mt-4">
-                  <Progress value={score} className="h-3" />
-                  <p className={`text-sm mt-2 ${scoreData.textColor} font-medium`}>
-                    {scoreData.recommendation}
-                  </p>
-                </div>
               </div>
+            )}
+            <div className="text-slate-600 text-sm">
+              Assessment for year {year}
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Suggested Loan Amount Section */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border-2 border-green-200">
-              <div className="flex items-center gap-3 mb-4">
-                <DollarSign className="h-6 w-6 text-green-600" />
+      {/* Detailed Scoring Factors */}
+      <Card className="mt-8 bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold text-slate-900">Scoring Breakdown</CardTitle>
+          <CardDescription>Detailed analysis of factors contributing to the eligibility score</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {factors.map((factor, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Suggested Loan Amount</h3>
-                  <p className="text-sm text-gray-600">Based on financial analysis</p>
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  AED {calculateInitialLoanSuggestion.suggestedAmount.toLocaleString()}
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-                  <div>
-                    <div className="font-semibold">Interest Rate</div>
-                    <div className="text-lg text-green-600">{calculateInitialLoanSuggestion.interestRate}%</div>
+                  <div className="font-semibold text-slate-900">{factor.name}</div>
+                  <div className="text-sm text-slate-600">
+                    Weight: {(factor.weight * 100).toFixed(0)}%
                   </div>
-                  <div>
-                    <div className="font-semibold">Term</div>
-                    <div className="text-lg text-green-600">{calculateInitialLoanSuggestion.repaymentTermYears} years</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-slate-900">
+                    {factor.score.toFixed(1)}/{factor.maxScore}
+                  </div>
+                  <div className="text-sm text-slate-500">
+                    {factor.maxScore > 0 ? ((factor.score / factor.maxScore) * 100).toFixed(0) : '0'}%
                   </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-
-          {/* Loan Suggestion & Payability Section */}
-          <div className="border-t pt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Editable Loan Form */}
-              <EditableLoanForm
-                suggestedAmount={calculateInitialLoanSuggestion.suggestedAmount}
-                suggestedRate={calculateInitialLoanSuggestion.interestRate}
-                suggestedTerm={calculateInitialLoanSuggestion.repaymentTermYears}
-                onLoanParamsChange={setCurrentLoanParams}
-              />
-              
-              {/* Enhanced Payability Visualization */}
-              <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-green-200">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
-                    <div>
-                      <CardTitle className="text-xl text-gray-900">Loan Payability Analysis</CardTitle>
-                      <CardDescription className="text-gray-600">Financial health projection over repayment period</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="bg-white p-4 rounded-lg border-2 border-green-200">
-                    <div className="text-center mb-4">
-                      <div className="text-3xl font-bold text-green-600">
-                        AED {currentLoanParams.monthlyEMI.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">Monthly EMI</div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">
-                          AED {currentLoanParams.loanAmount.toLocaleString()}
-                        </div>
-                        <div className="text-gray-600">Loan Amount</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">
-                          {currentLoanParams.interestRate}%
-                        </div>
-                        <div className="text-gray-600">Interest Rate</div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-3 rounded text-center">
-                      <div className="text-sm text-gray-600">
-                        Total repayable over <strong>{currentLoanParams.repaymentTermYears} years</strong>
-                      </div>
-                      <div className="text-lg font-bold text-gray-900">
-                        AED {(currentLoanParams.monthlyEMI * currentLoanParams.repaymentTermYears * 12).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Enhanced Data-Driven Visualization */}
-                  <div className="space-y-4">
-                    <h5 className="font-semibold text-gray-700">Financial Health Timeline</h5>
-                    
-                    <TooltipProvider>
-                      <div className="grid grid-cols-12 gap-1 h-24 items-end p-2 bg-white rounded border">
-                        {payabilityAnalysis.map((quarter, index) => {
-                          const barHeight = (quarter.healthScore / 100) * 100;
-                          const barColor = 
-                            quarter.riskLevel === 'low' ? 'bg-green-500' :
-                            quarter.riskLevel === 'medium' ? 'bg-yellow-500' : 'bg-red-500';
-                          
-                          return (
-                            <Tooltip key={index}>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className={`${barColor} rounded-sm transition-all duration-300 hover:opacity-80 cursor-pointer`}
-                                  style={{ height: `${Math.max(10, barHeight)}%` }}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-gray-900 text-white p-3 rounded-lg">
-                                <div className="text-xs space-y-1">
-                                  <div><strong>{quarter.quarterLabel}</strong></div>
-                                  <div>Health Score: {quarter.healthScore.toFixed(1)}%</div>
-                                  <div>Risk Level: {quarter.riskLevel.charAt(0).toUpperCase() + quarter.riskLevel.slice(1)}</div>
-                                  <div>Cumulative Paid: AED {quarter.cumulativePayment.toLocaleString()}</div>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
-                    </TooltipProvider>
-                    
-                    <div className="flex justify-between text-xs text-gray-600">
-                      <span>Start</span>
-                      <span>Loan Term ({currentLoanParams.repaymentTermYears * 12} Months)</span>
-                      <span>End</span>
-                    </div>
-                    
-                    {/* Risk Level Legend */}
-                    <div className="flex justify-center gap-6 text-xs">
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 bg-green-500 rounded"></div>
-                        <span>Low Risk</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                        <span>Medium Risk</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 bg-red-500 rounded"></div>
-                        <span>High Risk</span>
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-gray-600 space-y-2">
-                      <div><strong>Analysis Summary:</strong></div>
-                      <div>• Timeline shows quarterly financial health projections</div>
-                      <div>• Height indicates relative financial strength</div>
-                      <div>• Colors represent repayment risk levels</div>
-                      <div>• Based on liquidity, leverage, profitability, and coverage ratios</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {detailed && (
-            <div className="space-y-4 border-t pt-4">
-              <h4 className="font-semibold text-lg">Detailed CAD Assessment Criteria</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {criteriaAnalysis.map((criteria, index) => (
-                  <Card key={index} className="border">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm">{criteria.name}</CardTitle>
-                        {criteria.status === 'pass' ? 
-                          <CheckCircle className="h-4 w-4 text-green-500" /> : 
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        }
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Score:</span>
-                          <span className="font-mono">{criteria.score}/{criteria.weight}</span>
-                        </div>
-                        <Progress value={(criteria.score / criteria.weight) * 100} className="h-2" />
-                        <p className="text-xs text-gray-600">{criteria.metrics}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Alert className={scoreData.bgColor}>
-            <DollarSign className="h-4 w-4" />
-            <AlertDescription className={scoreData.textColor}>
-              <strong>CAD Loan Recommendation:</strong> {scoreData.recommendation}
-              {score < 55 && " - Consider requiring additional security or trade credit insurance."}
-              {score >= 85 && " - Eligible for expedited processing and competitive documentary credit terms."}
-              {!ratios.dataQuality.isValid && " - Recommendation subject to data quality verification."}
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
     </div>
