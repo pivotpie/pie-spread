@@ -122,6 +122,26 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
     'Net Profit': {
       label: "Net Profit",
       color: "#82ca9d"
+    },
+    Operating: {
+      label: "Operating",
+      color: "#22c55e"
+    },
+    Investing: {
+      label: "Investing", 
+      color: "#ef4444"
+    },
+    Financing: {
+      label: "Financing",
+      color: "#3b82f6"
+    },
+    "Shareholder's Equity": {
+      label: "Shareholder's Equity",
+      color: "#10b981"
+    },
+    'Total Debt': {
+      label: "Total Debt",
+      color: "#f59e0b"
     }
   };
 
@@ -208,6 +228,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   outerRadius={80}
                   dataKey="value"
                   nameKey="name"
+                  label={false}
                 >
                   {cashFlowData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -215,9 +236,17 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 </Pie>
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
+                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
                 />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend 
+                  content={<ChartLegendContent />}
+                  payload={cashFlowData.map(entry => ({
+                    value: entry.name,
+                    type: 'square',
+                    color: entry.fill,
+                    dataKey: entry.name
+                  }))}
+                />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -245,6 +274,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   outerRadius={80}
                   dataKey="value"
                   nameKey="name"
+                  label={false}
                 >
                   {equityDebtData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -252,9 +282,17 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 </Pie>
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
+                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
                 />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend 
+                  content={<ChartLegendContent />}
+                  payload={equityDebtData.map(entry => ({
+                    value: entry.name,
+                    type: 'square',
+                    color: entry.fill,
+                    dataKey: entry.name
+                  }))}
+                />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
