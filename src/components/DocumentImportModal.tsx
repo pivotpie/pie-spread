@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -49,10 +50,18 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
     }
   };
 
-  const handleSampleDataLoad = () => {
+  const handleSampleDataLoad = (datasetType: 'manufacturing' | 'fashion' | 'consumables') => {
     setUploadStatus('uploading');
     setTimeout(() => {
-      import('@/data/financialData.json').then((data) => {
+      let dataPath = '@/data/financialData.json';
+      
+      if (datasetType === 'fashion') {
+        dataPath = '@/data/fashionRetailData.json';
+      } else if (datasetType === 'consumables') {
+        dataPath = '@/data/consumablesRetailData.json';
+      }
+      
+      import(dataPath).then((data) => {
         onDataImported(data.default);
         onClose();
         setUploadStatus('idle');
@@ -217,7 +226,47 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
                         </div>
                       </div>
                       <Button 
-                        onClick={handleSampleDataLoad}
+                        onClick={() => handleSampleDataLoad('manufacturing')}
+                        disabled={uploadStatus === 'uploading'}
+                      >
+                        {uploadStatus === 'uploading' ? 'Loading...' : 'Load Data'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Fashion Retail Company Dataset</h4>
+                        <p className="text-sm text-gray-500">High-growth fashion retailer with strong profitability trends</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="secondary">Balance Sheet</Badge>
+                          <Badge variant="secondary">Income Statement</Badge>
+                          <Badge variant="secondary">Cash Flow</Badge>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => handleSampleDataLoad('fashion')}
+                        disabled={uploadStatus === 'uploading'}
+                      >
+                        {uploadStatus === 'uploading' ? 'Loading...' : 'Load Data'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Consumables Retail Company Dataset</h4>
+                        <p className="text-sm text-gray-500">Established retail business with declining profitability challenges</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="secondary">Balance Sheet</Badge>
+                          <Badge variant="secondary">Income Statement</Badge>
+                          <Badge variant="secondary">Cash Flow</Badge>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => handleSampleDataLoad('consumables')}
                         disabled={uploadStatus === 'uploading'}
                       >
                         {uploadStatus === 'uploading' ? 'Loading...' : 'Load Data'}
