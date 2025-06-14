@@ -146,158 +146,177 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {/* Assets vs Liabilities */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-sm font-medium">Assets vs Liabilities</CardTitle>
-            <CardDescription>Balance sheet composition</CardDescription>
-          </div>
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={assetsLiabilitiesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
-                />
-                <Bar dataKey="Current Assets" fill="#8884d8" />
-                <Bar dataKey="Non-Current Assets" fill="#82ca9d" />
-                <Bar dataKey="Current Liabilities" fill="#ffc658" />
-                <Bar dataKey="Non-Current Liabilities" fill="#ff7300" />
-                <ChartLegend content={<ChartLegendContent />} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent">Financial Analytics Dashboard</h2>
+        <p className="text-slate-600 mt-2 text-lg">Visual representation of key financial metrics for {selectedYear}</p>
+      </div>
 
-      {/* Revenue Trend */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-sm font-medium">Revenue & Profit</CardTitle>
-            <CardDescription>Performance over time</CardDescription>
-          </div>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueTrendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="year" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
-                />
-                <Line type="monotone" dataKey="Revenue" stroke="#8884d8" strokeWidth={2} />
-                <Line type="monotone" dataKey="Net Profit" stroke="#82ca9d" strokeWidth={2} />
-                <ChartLegend content={<ChartLegendContent />} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Assets vs Liabilities */}
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-blue-100 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+            <div>
+              <CardTitle className="text-lg font-bold text-slate-900">Assets vs Liabilities</CardTitle>
+              <CardDescription className="text-slate-600">Balance sheet composition</CardDescription>
+            </div>
+            <div className="p-3 bg-blue-500 rounded-xl shadow-lg">
+              <BarChart3 className="h-6 w-6 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={assetsLiabilitiesData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
+                  />
+                  <Bar dataKey="Current Assets" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Non-Current Assets" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Current Liabilities" fill="#ffc658" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Non-Current Liabilities" fill="#ff7300" radius={[4, 4, 0, 0]} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-      {/* Cash Flow Breakdown */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-sm font-medium">Cash Flow Analysis</CardTitle>
-            <CardDescription>Sources and uses of cash</CardDescription>
-          </div>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={cashFlowData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  dataKey="value"
-                  nameKey="name"
-                  label={false}
-                >
-                  {cashFlowData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
-                />
-                <ChartLegend 
-                  content={<ChartLegendContent />}
-                  payload={cashFlowData.map(entry => ({
-                    value: entry.name,
-                    type: 'square',
-                    color: entry.fill,
-                    dataKey: entry.name
-                  }))}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+        {/* Revenue Trend */}
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-emerald-100 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-emerald-50 to-emerald-100 border-b border-emerald-200">
+            <div>
+              <CardTitle className="text-lg font-bold text-slate-900">Revenue & Profit</CardTitle>
+              <CardDescription className="text-slate-600">Performance over time</CardDescription>
+            </div>
+            <div className="p-3 bg-emerald-500 rounded-xl shadow-lg">
+              <TrendingUp className="h-6 w-6 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
+                  />
+                  <Line type="monotone" dataKey="Revenue" stroke="#8884d8" strokeWidth={3} dot={{ fill: '#8884d8', r: 5 }} />
+                  <Line type="monotone" dataKey="Net Profit" stroke="#82ca9d" strokeWidth={3} dot={{ fill: '#82ca9d', r: 5 }} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-      {/* Equity vs Debt */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-sm font-medium">Capital Structure</CardTitle>
-            <CardDescription>Equity vs debt financing</CardDescription>
-          </div>
-          <TrendingDown className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={equityDebtData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  dataKey="value"
-                  nameKey="name"
-                  label={false}
-                >
-                  {equityDebtData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
-                />
-                <ChartLegend 
-                  content={<ChartLegendContent />}
-                  payload={equityDebtData.map(entry => ({
-                    value: entry.name,
-                    type: 'square',
-                    color: entry.fill,
-                    dataKey: entry.name
-                  }))}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+        {/* Cash Flow Breakdown */}
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-purple-100 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-purple-200">
+            <div>
+              <CardTitle className="text-lg font-bold text-slate-900">Cash Flow Analysis</CardTitle>
+              <CardDescription className="text-slate-600">Sources and uses of cash</CardDescription>
+            </div>
+            <div className="p-3 bg-purple-500 rounded-xl shadow-lg">
+              <DollarSign className="h-6 w-6 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={cashFlowData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={100}
+                    dataKey="value"
+                    nameKey="name"
+                    label={false}
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                  >
+                    {cashFlowData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
+                  />
+                  <ChartLegend 
+                    content={<ChartLegendContent />}
+                    payload={cashFlowData.map(entry => ({
+                      value: entry.name,
+                      type: 'square',
+                      color: entry.fill,
+                      dataKey: entry.name
+                    }))}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Equity vs Debt */}
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-orange-100 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200">
+            <div>
+              <CardTitle className="text-lg font-bold text-slate-900">Capital Structure</CardTitle>
+              <CardDescription className="text-slate-600">Equity vs debt financing</CardDescription>
+            </div>
+            <div className="p-3 bg-orange-500 rounded-xl shadow-lg">
+              <TrendingDown className="h-6 w-6 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={equityDebtData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={100}
+                    dataKey="value"
+                    nameKey="name"
+                    label={false}
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                  >
+                    {equityDebtData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
+                  />
+                  <ChartLegend 
+                    content={<ChartLegendContent />}
+                    payload={equityDebtData.map(entry => ({
+                      value: entry.name,
+                      type: 'square',
+                      color: entry.fill,
+                      dataKey: entry.name
+                    }))}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

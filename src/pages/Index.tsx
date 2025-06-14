@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,8 +118,8 @@ const Index = () => {
   // Show blank state if no data is loaded
   if (!data) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="w-full max-w-none px-8 py-6">
           <BlankState 
             onImportClick={() => setIsImportModalOpen(true)} 
             onSampleDataLoad={handleSampleDataLoad}
@@ -134,102 +135,114 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full max-w-none px-8 py-6 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <FileSpreadsheet className="h-8 w-8 text-blue-600" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                <FileSpreadsheet className="h-8 w-8 text-white" />
+              </div>
               CAD Loan Assessment Platform
             </h1>
-            <p className="text-gray-600 mt-2">Cash Against Documents - Financial Analysis & Risk Assessment</p>
+            <p className="text-slate-600 mt-3 text-lg">Cash Against Documents - Financial Analysis & Risk Assessment</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Button 
               variant="outline" 
               onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-3 px-6 py-3 border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 rounded-xl shadow-sm"
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="h-5 w-5" />
               Import New Data
             </Button>
             <select 
               value={selectedYear} 
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-6 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm bg-white/80 backdrop-blur-sm text-lg font-medium"
             >
               {years.map(year => (
                 <option key={year} value={year}>Year {year}</option>
               ))}
             </select>
-            <Badge variant="outline" className="px-3 py-1">
-              <CreditCard className="h-4 w-4 mr-1" />
+            <Badge variant="outline" className="px-4 py-2 border-2 border-emerald-200 bg-emerald-50 text-emerald-700 rounded-xl shadow-sm">
+              <CreditCard className="h-5 w-5 mr-2" />
               CAD Assessment
             </Badge>
           </div>
         </div>
 
         {/* Loan Eligibility Score */}
-        <LoanEligibilityScore ratios={currentRatios} year={selectedYear} />
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+          <LoanEligibilityScore ratios={currentRatios} year={selectedYear} />
+        </div>
 
         {/* Key Metrics Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+              <CardTitle className="text-sm font-semibold">Total Assets</CardTitle>
+              <div className="p-2 bg-white/20 rounded-lg">
+                <DollarSign className="h-5 w-5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-slate-900">
                 {formatCurrency(getValueByFieldAndYear("Balance Sheet", "Total Assets", selectedYear))}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-slate-600 mt-2">
                 Company's total asset base
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
+              <CardTitle className="text-sm font-semibold">Net Profit</CardTitle>
+              <div className="p-2 bg-white/20 rounded-lg">
+                <TrendingUp className="h-5 w-5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-slate-900">
                 {formatCurrency(getValueByFieldAndYear("Income Statement", "Net Profit", selectedYear))}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-slate-600 mt-2">
                 Annual profitability
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Ratio</CardTitle>
-              <Calculator className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+              <CardTitle className="text-sm font-semibold">Current Ratio</CardTitle>
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Calculator className="h-5 w-5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-slate-900">
                 {currentRatios.currentRatio.isReliable ? currentRatios.currentRatio.value.toFixed(2) : 'N/A'}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-slate-600 mt-2">
                 Liquidity measure
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Debt-to-Equity</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+              <CardTitle className="text-sm font-semibold">Debt-to-Equity</CardTitle>
+              <div className="p-2 bg-white/20 rounded-lg">
+                <BarChart3 className="h-5 w-5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-slate-900">
                 {currentRatios.debtToEquity.isReliable ? currentRatios.debtToEquity.value.toFixed(2) : 'N/A'}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-slate-600 mt-2">
                 Leverage indicator
               </p>
             </CardContent>
@@ -237,67 +250,75 @@ const Index = () => {
         </div>
 
         {/* Financial Charts Section */}
-        <FinancialCharts data={data} selectedYear={selectedYear} years={years} />
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
+          <FinancialCharts data={data} selectedYear={selectedYear} years={years} />
+        </div>
 
         {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="ratios" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="ratios">Ratio Analysis</TabsTrigger>
-            <TabsTrigger value="statements">Financial Statements</TabsTrigger>
-            <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="ratios">
-            <RatioAnalysis ratios={currentRatios} year={selectedYear} />
-          </TabsContent>
-
-          <TabsContent value="statements" className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Balance Sheet</CardTitle>
-                  <CardDescription>Financial position as of {selectedYear}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FinancialTable 
-                    data={data["Balance Sheet"].filter(item => item.year === selectedYear)} 
-                    title="Balance Sheet"
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Income Statement</CardTitle>
-                  <CardDescription>Performance for year {selectedYear}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FinancialTable 
-                    data={data["Income Statement"].filter(item => item.year === selectedYear)} 
-                    title="Income Statement"
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Cash Flow Statement</CardTitle>
-                  <CardDescription>Cash movements in {selectedYear}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FinancialTable 
-                    data={data["Cash Flow Statement"].filter(item => item.year === selectedYear)} 
-                    title="Cash Flow Statement"
-                  />
-                </CardContent>
-              </Card>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+          <Tabs defaultValue="ratios" className="w-full">
+            <div className="border-b border-slate-200 bg-slate-50/50 px-8 py-6">
+              <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl p-2 shadow-sm">
+                <TabsTrigger value="ratios" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Ratio Analysis</TabsTrigger>
+                <TabsTrigger value="statements" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Financial Statements</TabsTrigger>
+                <TabsTrigger value="trends" className="rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 font-semibold">Trend Analysis</TabsTrigger>
+              </TabsList>
             </div>
-          </TabsContent>
 
-          <TabsContent value="trends">
-            <TrendChart data={data} years={years} />
-          </TabsContent>
-        </Tabs>
+            <div className="p-8">
+              <TabsContent value="ratios">
+                <RatioAnalysis ratios={currentRatios} year={selectedYear} />
+              </TabsContent>
+
+              <TabsContent value="statements" className="space-y-8">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 border-b border-slate-200">
+                      <CardTitle className="text-xl font-bold text-slate-900">Balance Sheet</CardTitle>
+                      <CardDescription className="text-slate-600">Financial position as of {selectedYear}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <FinancialTable 
+                        data={data["Balance Sheet"].filter(item => item.year === selectedYear)} 
+                        title="Balance Sheet"
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 border-b border-slate-200">
+                      <CardTitle className="text-xl font-bold text-slate-900">Income Statement</CardTitle>
+                      <CardDescription className="text-slate-600">Performance for year {selectedYear}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <FinancialTable 
+                        data={data["Income Statement"].filter(item => item.year === selectedYear)} 
+                        title="Income Statement"
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 border-b border-slate-200">
+                      <CardTitle className="text-xl font-bold text-slate-900">Cash Flow Statement</CardTitle>
+                      <CardDescription className="text-slate-600">Cash movements in {selectedYear}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <FinancialTable 
+                        data={data["Cash Flow Statement"].filter(item => item.year === selectedYear)} 
+                        title="Cash Flow Statement"
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="trends">
+                <TrendChart data={data} years={years} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
 
         <DocumentImportModal
           isOpen={isImportModalOpen}
