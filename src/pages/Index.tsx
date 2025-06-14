@@ -23,6 +23,7 @@ import { TrendChart } from '@/components/TrendChart';
 import { LoanEligibilityScore } from '@/components/LoanEligibilityScore';
 import { BlankState } from '@/components/BlankState';
 import { DocumentImportModal } from '@/components/DocumentImportModal';
+import { FinancialCharts } from '@/components/FinancialCharts';
 import { calculateRobustRatios } from '@/utils/ratioCalculations';
 
 interface FinancialItem {
@@ -234,6 +235,9 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Financial Charts Section */}
+        <FinancialCharts data={data} selectedYear={selectedYear} years={years} />
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="ratios" className="space-y-6">
