@@ -15,13 +15,15 @@ import {
   AlertTriangle,
   BarChart3,
   FileSpreadsheet,
-  CreditCard
+  CreditCard,
+  Upload
 } from 'lucide-react';
-import financialData from '@/data/financialData.json';
 import { FinancialTable } from '@/components/FinancialTable';
 import { RatioAnalysis } from '@/components/RatioAnalysis';
 import { TrendChart } from '@/components/TrendChart';
 import { LoanEligibilityScore } from '@/components/LoanEligibilityScore';
+import { BlankState } from '@/components/BlankState';
+import { DocumentImportModal } from '@/components/DocumentImportModal';
 
 interface FinancialItem {
   field_name: string;
@@ -39,9 +41,11 @@ interface FinancialData {
 
 const Index = () => {
   const [selectedYear, setSelectedYear] = useState<number>(2023);
-  const data = financialData as FinancialData;
+  const [data, setData] = useState<FinancialData | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   
   const years = useMemo(() => {
+    if (!data) return [];
     const allYears = new Set<number>();
     Object.values(data).forEach(items => 
       items.forEach(item => allYears.add(item.year))
@@ -49,7 +53,23 @@ const Index = () => {
     return Array.from(allYears).sort();
   }, [data]);
 
+  const handleDataImported = (importedData: FinancialData) => {
+    setData(importedData);
+    if (importedData) {
+      // Set the most recent year as default
+      const allYears = new Set<number>();
+      Object.values(importedData).forEach(items => 
+        items.forEach(item => allYears.add(item.year))
+      );
+      const sortedYears = Array.from(allYears).sort();
+      if (sortedYears.length > 0) {
+        setSelectedYear(sortedYears[sortedYears.length - 1]);
+      }
+    }
+  };
+
   const getValueByFieldAndYear = (statement: keyof FinancialData, fieldName: string, year: number) => {
+    if (!data) return 0;
     const item = data[statement].find(item => 
       item.field_name === fieldName && item.year === year
     );
@@ -61,6 +81,19 @@ const Index = () => {
   };
 
   const calculateRatios = (year: number) => {
+    if (!data) {
+      return {
+        currentRatio: 0,
+        debtToEquity: 0,
+        returnOnAssets: 0,
+        returnOnEquity: 0,
+        profitMargin: 0,
+        debtServiceCoverage: 0,
+        debtToAssets: 0,
+        equityRatio: 0
+      };
+    }
+
     const totalAssets = getValueByFieldAndYear("Balance Sheet", "Total Assets", year);
     const currentAssets = getValueByFieldAndYear("Balance Sheet", "Current Assets", year);
     const currentLiabilities = getValueByFieldAndYear("Balance Sheet", "Current Liabilities", year);
@@ -88,6 +121,22 @@ const Index = () => {
 
   const currentRatios = calculateRatios(selectedYear);
 
+  // Show blank state if no data is loaded
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <BlankState onImportClick={() => setIsImportModalOpen(true)} />
+          <DocumentImportModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            onDataImported={handleDataImported}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -96,11 +145,19 @@ const Index = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <FileSpreadsheet className="h-8 w-8 text-blue-600" />
-              Financial Spreading Dashboard
+              CAD Loan Assessment Platform
             </h1>
-            <p className="text-gray-600 mt-2">Bank Credit Team - Loan Eligibility Analysis</p>
+            <p className="text-gray-600 mt-2">Cash Against Documents - Financial Analysis & Risk Assessment</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Import New Data
+            </Button>
             <select 
               value={selectedYear} 
               onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -112,7 +169,7 @@ const Index = () => {
             </select>
             <Badge variant="outline" className="px-3 py-1">
               <CreditCard className="h-4 w-4 mr-1" />
-              Credit Assessment
+              CAD Assessment
             </Badge>
           </div>
         </div>
@@ -189,7 +246,7 @@ const Index = () => {
             <TabsTrigger value="statements">Financial Statements</TabsTrigger>
             <TabsTrigger value="ratios">Ratio Analysis</TabsTrigger>
             <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
-            <TabsTrigger value="eligibility">Loan Assessment</TabsTrigger>
+            <TabsTrigger value="eligibility">CAD Assessment</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statements" className="space-y-6">
@@ -248,8 +305,8 @@ const Index = () => {
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  This loan eligibility assessment is based on standard banking ratios and thresholds. 
-                  Final loan decisions require additional documentation and credit bureau checks.
+                  This CAD loan eligibility assessment is based on standard banking ratios and trade finance criteria. 
+                  Final loan decisions require additional documentation and credit bureau verification.
                 </AlertDescription>
               </Alert>
               
@@ -257,6 +314,12 @@ const Index = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        <DocumentImportModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onDataImported={handleDataImported}
+        />
       </div>
     </div>
   );
