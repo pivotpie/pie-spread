@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -105,10 +104,10 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
         break;
 
       default:
-        return null;
+        return "";
     }
 
-    return null;
+    return "";
   };
 
   const formatRatioValue = (ratio: SafeRatioResult, isPercentage: boolean = false): string => {
@@ -305,22 +304,22 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
       {ratioCategories.map((category, categoryIndex) => (
         <div key={categoryIndex} className="space-y-4">
           <h3 className="text-xl font-semibold text-gray-800 border-b pb-2">{category.category}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {category.ratios.map((ratioItem, index) => {
               const contextualExplanation = getContextualExplanation(ratioItem.name, ratioItem.ratio, ratioItem.analysis);
               
               return (
-                <Card key={index}>
-                  <CardHeader>
+                <Card key={index} className="bg-white/80 backdrop-blur-sm border border-slate-100 shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                  <CardHeader className="p-4 border-b bg-slate-50/70">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">{ratioItem.name}</CardTitle>
+                      <CardTitle className="text-sm font-semibold text-slate-800">{ratioItem.name}</CardTitle>
                       {ratioItem.analysis.icon}
                     </div>
-                    <CardDescription className="text-xs">{ratioItem.description}</CardDescription>
+                    <CardDescription className="text-xs text-slate-500 pt-1">{ratioItem.description}</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold">{ratioItem.format(ratioItem.ratio)}</span>
+                      <span className="text-2xl font-bold text-slate-800">{ratioItem.format(ratioItem.ratio)}</span>
                       <Badge 
                         variant={ratioItem.analysis.status === 'good' ? 'default' : 
                                 ratioItem.analysis.status === 'acceptable' ? 'secondary' : 'destructive'}
@@ -335,18 +334,21 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
                     
                     {/* Contextual Explanation */}
                     {contextualExplanation && (
-                      <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
-                        <div className="flex items-start gap-1">
-                          <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                          <span><strong>Impact:</strong> {contextualExplanation}</span>
+                      <div className="text-xs text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+                        <div className="flex items-start gap-2">
+                          <Info className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500" />
+                          <p className="flex-1"><strong>Impact:</strong> {contextualExplanation}</p>
                         </div>
                       </div>
                     )}
                     
                     {/* Technical Warnings */}
                     {(ratioItem.ratio.warning || ratioItem.analysis.warning) && (
-                      <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
-                        <strong>Warning:</strong> {ratioItem.ratio.warning || ratioItem.analysis.warning}
+                      <div className="text-xs text-orange-800 bg-orange-50 p-3 rounded-md border border-orange-200">
+                         <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-orange-500" />
+                          <p className="flex-1"><strong>Warning:</strong> {ratioItem.ratio.warning || ratioItem.analysis.warning}</p>
+                        </div>
                       </div>
                     )}
                   </CardContent>
