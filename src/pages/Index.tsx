@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -17,6 +18,9 @@ import {
 import { CADLoanAssessment } from '@/components/CADLoanAssessment';
 import { DocumentImportModal } from '@/components/DocumentImportModal';
 import { LoanEligibilityScore } from '@/components/LoanEligibilityScore';
+import { FinancialStatements } from '@/components/FinancialStatements';
+import { TrendAnalysis } from '@/components/TrendAnalysis';
+import { RatioAnalysis } from '@/components/RatioAnalysis';
 import { calculateCADRatios, getCADLoanRecommendation } from '@/utils/cadRatioCalculations';
 
 interface FinancialData {
@@ -61,7 +65,7 @@ const Index = () => {
     setIsModalOpen(false);
   };
 
-  // Calculate ratios only if we have financial data
+  // Calculate CAD-specific ratios
   const currentRatios = useMemo(() => {
     if (!financialData) return null;
 
@@ -78,7 +82,7 @@ const Index = () => {
 
   const loanRecommendation = currentRatios ? getCADLoanRecommendation(currentRatios) : null;
 
-  // Legacy ratios for LoanEligibilityScore component
+  // Legacy ratios for compatibility with existing components
   const legacyRatios = useMemo(() => {
     if (!financialData) return null;
 
@@ -227,188 +231,50 @@ const Index = () => {
             </CardHeader>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {/* CAD Loan Assessment */}
-            {currentRatios && (
-              <CADLoanAssessment 
-                ratios={currentRatios} 
-                loanData={cadLoanData}
-                year={2023} 
-              />
-            )}
+          <Tabs defaultValue="cad-assessment" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="cad-assessment">CAD Assessment</TabsTrigger>
+              <TabsTrigger value="financial-statements">Financial Statements</TabsTrigger>
+              <TabsTrigger value="trend-analysis">Trend Analysis</TabsTrigger>
+              <TabsTrigger value="ratio-analysis">Ratio Analysis</TabsTrigger>
+            </TabsList>
 
-            {/* Enhanced Ratios */}
-            {currentRatios && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Enhanced Financial Ratios</h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Liquidity Analysis */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Liquidity Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Current Ratio:</span>
-                        <span className="font-mono">{currentRatios.currentRatio.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Quick Ratio:</span>
-                        <span className="font-mono">{currentRatios.quickRatio.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Cash Ratio:</span>
-                        <span className="font-mono">{currentRatios.cashRatio.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Working Capital Ratio:</span>
-                        <span className="font-mono">{(currentRatios.workingCapitalRatio * 100).toFixed(1)}%</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* CAD-Specific Metrics */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">CAD-Specific Metrics</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Trade Finance Ratio:</span>
-                        <span className="font-mono">{currentRatios.tradeFinanceRatio.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Document Coverage:</span>
-                        <span className="font-mono">{currentRatios.documentCoverageRatio.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Cash Conversion Cycle:</span>
-                        <span className="font-mono">{currentRatios.cashConversionCycle.toFixed(0)} days</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Receivables Turnover:</span>
-                        <span className="font-mono">{currentRatios.receivablesTurnover.toFixed(1)}x</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Risk Assessment */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Risk Assessment</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Credit Risk Score:</span>
-                        <span className="font-mono">{currentRatios.creditRiskScore.toFixed(0)}/100</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Concentration Risk:</span>
-                        <span className="font-mono">{currentRatios.concentrationRisk.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Volatility Index:</span>
-                        <span className="font-mono">{currentRatios.volatilityIndex.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Interest Coverage:</span>
-                        <span className="font-mono">{currentRatios.timesInterestEarned.toFixed(1)}x</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Leverage Ratios */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Leverage Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Debt-to-Equity:</span>
-                        <span className="font-mono">{currentRatios.debtToEquity.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Debt-to-Assets:</span>
-                        <span className="font-mono">{(currentRatios.debtToAssets * 100).toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Equity Ratio:</span>
-                        <span className="font-mono">{(currentRatios.equityRatio * 100).toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Debt Service Coverage:</span>
-                        <span className="font-mono">{currentRatios.debtServiceCoverage.toFixed(2)}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Profitability Metrics */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Profitability Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Return on Assets:</span>
-                        <span className="font-mono">{currentRatios.returnOnAssets.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Return on Equity:</span>
-                        <span className="font-mono">{currentRatios.returnOnEquity.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Profit Margin:</span>
-                        <span className="font-mono">{currentRatios.profitMargin.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Operating Margin:</span>
-                        <span className="font-mono">{currentRatios.operatingMargin.toFixed(1)}%</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Efficiency Ratios */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Efficiency Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Asset Turnover:</span>
-                        <span className="font-mono">{currentRatios.assetTurnoverRatio.toFixed(2)}x</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Inventory Turnover:</span>
-                        <span className="font-mono">{currentRatios.inventoryTurnover.toFixed(1)}x</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Payables Turnover:</span>
-                        <span className="font-mono">{currentRatios.payablesTurnover.toFixed(1)}x</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Interest Coverage:</span>
-                        <span className="font-mono">{currentRatios.interestCoverageRatio.toFixed(1)}x</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+            <TabsContent value="cad-assessment" className="space-y-6">
+              {currentRatios && (
+                <CADLoanAssessment 
+                  ratios={currentRatios} 
+                  loanData={cadLoanData}
+                  year={2023} 
+                />
+              )}
+              
+              {legacyRatios && (
+                <div className="space-y-6">
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      CAD-specific credit recommendation based on enhanced trade finance analysis and risk assessment.
+                    </AlertDescription>
+                  </Alert>
+                  <LoanEligibilityScore ratios={legacyRatios} year={2023} detailed={true} />
                 </div>
-              </div>
-            )}
+              )}
+            </TabsContent>
 
-            {/* CAD Credit Recommendation */}
-            {legacyRatios && (
-              <div className="space-y-6">
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    CAD-specific credit recommendation based on enhanced trade finance analysis and risk assessment.
-                  </AlertDescription>
-                </Alert>
-                <LoanEligibilityScore ratios={legacyRatios} year={2023} detailed={true} />
-              </div>
-            )}
-          </div>
+            <TabsContent value="financial-statements">
+              <FinancialStatements financialData={financialData} year={2023} />
+            </TabsContent>
+
+            <TabsContent value="trend-analysis">
+              <TrendAnalysis financialData={financialData} year={2023} />
+            </TabsContent>
+
+            <TabsContent value="ratio-analysis">
+              {legacyRatios && (
+                <RatioAnalysis ratios={legacyRatios} year={2023} />
+              )}
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* Document Import Modal */}
