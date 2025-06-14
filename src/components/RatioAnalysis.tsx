@@ -3,36 +3,26 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-
-interface Ratios {
-  currentRatio: number;
-  quickRatio: number;
-  debtToEquity: number;
-  grossProfitMargin: number;
-  netProfitMargin: number;
-  operatingMargin: number;
-  ebitdaMargin: number;
-  returnOnAssets: number;
-  returnOnEquity: number;
-  assetTurnover: number;
-  inventoryTurnover: number;
-  interestCoverage: number;
-  debtRatio: number;
-  cashRatio: number;
-  capitalAdequacy: number;
-}
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
+import { RobustRatios, SafeRatioResult } from '@/utils/ratioCalculations';
 
 interface RatioAnalysisProps {
-  ratios: Ratios;
+  ratios: RobustRatios;
   year: number;
 }
 
 export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) => {
-  const getRatioStatus = (value: number, good: number, acceptable: number, reverse: boolean = false) => {
-    // Handle invalid/negative values
-    if (value < 0 || !isFinite(value) || isNaN(value)) {
-      return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
+  const getRatioStatus = (ratio: SafeRatioResult, good: number, acceptable: number, reverse: boolean = false) => {
+    const value = ratio.value;
+    
+    // Handle unreliable data
+    if (!ratio.isReliable || value < 0 || !isFinite(value) || isNaN(value)) {
+      return { 
+        status: 'poor', 
+        icon: <XCircle className="h-4 w-4 text-red-500" />,
+        warning: ratio.warning
+      };
     }
 
     if (reverse) {
@@ -48,30 +38,37 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
     }
   };
 
+  const formatRatioValue = (ratio: SafeRatioResult, isPercentage: boolean = false): string => {
+    if (!ratio.isReliable || !isFinite(ratio.value) || isNaN(ratio.value)) {
+      return 'N/A';
+    }
+    return isPercentage ? `${ratio.value.toFixed(1)}%` : ratio.value.toFixed(2);
+  };
+
   const ratioCategories = [
     {
       category: 'Liquidity Ratios',
       ratios: [
         {
           name: 'Current Ratio',
-          value: ratios.currentRatio,
-          format: (v: number) => isFinite(v) ? v.toFixed(2) : 'N/A',
+          ratio: ratios.currentRatio,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Ability to pay short-term obligations',
           benchmark: 'Good: ≥2.0, Acceptable: ≥1.5',
           analysis: getRatioStatus(ratios.currentRatio, 2.0, 1.5, false)
         },
         {
           name: 'Quick Ratio',
-          value: ratios.quickRatio,
-          format: (v: number) => isFinite(v) ? v.toFixed(2) : 'N/A',
+          ratio: ratios.quickRatio,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Liquidity excluding inventory',
           benchmark: 'Good: ≥1.0, Acceptable: ≥0.8',
           analysis: getRatioStatus(ratios.quickRatio, 1.0, 0.8, false)
         },
         {
           name: 'Cash Ratio',
-          value: ratios.cashRatio,
-          format: (v: number) => isFinite(v) ? v.toFixed(2) : 'N/A',
+          ratio: ratios.cashRatio,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Cash coverage of current liabilities',
           benchmark: 'Good: ≥0.5, Acceptable: ≥0.2',
           analysis: getRatioStatus(ratios.cashRatio, 0.5, 0.2, false)
@@ -83,24 +80,24 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
       ratios: [
         {
           name: 'Debt-to-Equity Ratio',
-          value: ratios.debtToEquity,
-          format: (v: number) => isFinite(v) ? v.toFixed(2) : 'N/A',
+          ratio: ratios.debtToEquity,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Financial leverage and capital structure',
           benchmark: 'Good: ≤1.0, Acceptable: ≤2.0',
           analysis: getRatioStatus(ratios.debtToEquity, 1.0, 2.0, true)
         },
         {
           name: 'Debt Ratio (%)',
-          value: ratios.debtRatio,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.debtRatio,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Proportion of assets financed by debt',
           benchmark: 'Good: ≤40%, Acceptable: ≤60%',
           analysis: getRatioStatus(ratios.debtRatio, 40, 60, true)
         },
         {
           name: 'Capital Adequacy Ratio (%)',
-          value: ratios.capitalAdequacy,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.capitalAdequacy,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Equity cushion relative to total assets',
           benchmark: 'Good: ≥50%, Acceptable: ≥30%',
           analysis: getRatioStatus(ratios.capitalAdequacy, 50, 30, false)
@@ -112,32 +109,32 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
       ratios: [
         {
           name: 'Gross Profit Margin (%)',
-          value: ratios.grossProfitMargin,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.grossProfitMargin,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Gross profitability relative to revenue',
           benchmark: 'Good: ≥30%, Acceptable: ≥20%',
           analysis: getRatioStatus(ratios.grossProfitMargin, 30, 20, false)
         },
         {
           name: 'Net Profit Margin (%)',
-          value: ratios.netProfitMargin,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.netProfitMargin,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Net profitability relative to revenue',
           benchmark: 'Good: ≥10%, Acceptable: ≥5%',
           analysis: getRatioStatus(ratios.netProfitMargin, 10, 5, false)
         },
         {
           name: 'Operating Margin (%)',
-          value: ratios.operatingMargin,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.operatingMargin,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Operating efficiency and profitability',
           benchmark: 'Good: ≥15%, Acceptable: ≥8%',
           analysis: getRatioStatus(ratios.operatingMargin, 15, 8, false)
         },
         {
           name: 'EBITDA Margin (%)',
-          value: ratios.ebitdaMargin,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.ebitdaMargin,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Operating performance before financing',
           benchmark: 'Good: ≥20%, Acceptable: ≥12%',
           analysis: getRatioStatus(ratios.ebitdaMargin, 20, 12, false)
@@ -149,40 +146,40 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
       ratios: [
         {
           name: 'Return on Assets (%)',
-          value: ratios.returnOnAssets,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.returnOnAssets,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Efficiency in using assets to generate profit',
           benchmark: 'Good: ≥15%, Acceptable: ≥10%',
           analysis: getRatioStatus(ratios.returnOnAssets, 15, 10, false)
         },
         {
           name: 'Return on Equity (%)',
-          value: ratios.returnOnEquity,
-          format: (v: number) => isFinite(v) ? `${v.toFixed(1)}%` : 'N/A',
+          ratio: ratios.returnOnEquity,
+          format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Returns generated on shareholders equity',
           benchmark: 'Good: ≥20%, Acceptable: ≥15%',
           analysis: getRatioStatus(ratios.returnOnEquity, 20, 15, false)
         },
         {
           name: 'Asset Turnover',
-          value: ratios.assetTurnover,
-          format: (v: number) => isFinite(v) ? v.toFixed(2) : 'N/A',
+          ratio: ratios.assetTurnover,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Efficiency of asset utilization',
           benchmark: 'Good: ≥1.5, Acceptable: ≥1.0',
           analysis: getRatioStatus(ratios.assetTurnover, 1.5, 1.0, false)
         },
         {
           name: 'Inventory Turnover',
-          value: ratios.inventoryTurnover,
-          format: (v: number) => isFinite(v) ? v.toFixed(1) : 'N/A',
+          ratio: ratios.inventoryTurnover,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Inventory management efficiency',
           benchmark: 'Good: ≥6.0, Acceptable: ≥4.0',
           analysis: getRatioStatus(ratios.inventoryTurnover, 6.0, 4.0, false)
         },
         {
           name: 'Interest Coverage',
-          value: ratios.interestCoverage,
-          format: (v: number) => isFinite(v) ? v.toFixed(1) : 'N/A',
+          ratio: ratios.interestCoverage,
+          format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Ability to service interest payments',
           benchmark: 'Good: ≥5.0, Acceptable: ≥2.5',
           analysis: getRatioStatus(ratios.interestCoverage, 5.0, 2.5, false)
@@ -190,9 +187,6 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
       ]
     }
   ];
-
-  // Check for data quality issues
-  const hasDataIssues = !isFinite(ratios.debtToEquity) || !isFinite(ratios.debtRatio) || !isFinite(ratios.capitalAdequacy);
 
   return (
     <div className="space-y-6">
@@ -203,16 +197,35 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
         </div>
       </div>
 
-      {hasDataIssues && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            <h3 className="font-semibold text-yellow-800">Data Quality Warning</h3>
-          </div>
-          <p className="text-yellow-700 mt-2">
-            Some financial ratios show unusual values that may indicate data quality issues. 
-            Please verify the underlying financial statement data for accuracy.
-          </p>
+      {/* Data Quality Alerts */}
+      {ratios.dataQuality.issues.length > 0 && (
+        <div className="space-y-3">
+          {ratios.dataQuality.issues
+            .filter(issue => issue.severity === 'high')
+            .map((issue, index) => (
+              <Alert key={index} className="border-red-200 bg-red-50">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  <strong>Data Quality Issue:</strong> {issue.description}
+                  {issue.suggestedFix && (
+                    <div className="mt-1 text-sm">
+                      <strong>Suggestion:</strong> {issue.suggestedFix}
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            ))}
+          
+          {ratios.dataQuality.issues
+            .filter(issue => issue.severity === 'medium')
+            .map((issue, index) => (
+              <Alert key={index} className="border-yellow-200 bg-yellow-50">
+                <Info className="h-5 w-5 text-yellow-600" />
+                <AlertDescription className="text-yellow-800">
+                  <strong>Warning:</strong> {issue.description}
+                </AlertDescription>
+              </Alert>
+            ))}
         </div>
       )}
 
@@ -220,29 +233,34 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
         <div key={categoryIndex} className="space-y-4">
           <h3 className="text-xl font-semibold text-gray-800 border-b pb-2">{category.category}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {category.ratios.map((ratio, index) => (
+            {category.ratios.map((ratioItem, index) => (
               <Card key={index}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">{ratio.name}</CardTitle>
-                    {ratio.analysis.icon}
+                    <CardTitle className="text-sm">{ratioItem.name}</CardTitle>
+                    {ratioItem.analysis.icon}
                   </div>
-                  <CardDescription className="text-xs">{ratio.description}</CardDescription>
+                  <CardDescription className="text-xs">{ratioItem.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold">{ratio.format(ratio.value)}</span>
+                    <span className="text-xl font-bold">{ratioItem.format(ratioItem.ratio)}</span>
                     <Badge 
-                      variant={ratio.analysis.status === 'good' ? 'default' : 
-                              ratio.analysis.status === 'acceptable' ? 'secondary' : 'destructive'}
+                      variant={ratioItem.analysis.status === 'good' ? 'default' : 
+                              ratioItem.analysis.status === 'acceptable' ? 'secondary' : 'destructive'}
                       className="text-xs"
                     >
-                      {ratio.analysis.status.charAt(0).toUpperCase() + ratio.analysis.status.slice(1)}
+                      {ratioItem.analysis.status.charAt(0).toUpperCase() + ratioItem.analysis.status.slice(1)}
                     </Badge>
                   </div>
                   <div className="text-xs text-gray-600">
-                    <strong>Benchmark:</strong> {ratio.benchmark}
+                    <strong>Benchmark:</strong> {ratioItem.benchmark}
                   </div>
+                  {ratioItem.ratio.warning && (
+                    <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                      <strong>Warning:</strong> {ratioItem.ratio.warning}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

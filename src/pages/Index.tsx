@@ -23,6 +23,7 @@ import { TrendChart } from '@/components/TrendChart';
 import { LoanEligibilityScore } from '@/components/LoanEligibilityScore';
 import { BlankState } from '@/components/BlankState';
 import { DocumentImportModal } from '@/components/DocumentImportModal';
+import { calculateRobustRatios } from '@/utils/ratioCalculations';
 
 interface FinancialItem {
   field_name: string;
@@ -88,85 +89,26 @@ const Index = () => {
   const calculateRatios = (year: number) => {
     if (!data) {
       return {
-        currentRatio: 0,
-        quickRatio: 0,
-        debtToEquity: 0,
-        grossProfitMargin: 0,
-        netProfitMargin: 0,
-        operatingMargin: 0,
-        ebitdaMargin: 0,
-        returnOnAssets: 0,
-        returnOnEquity: 0,
-        assetTurnover: 0,
-        inventoryTurnover: 0,
-        interestCoverage: 0,
-        debtRatio: 0,
-        cashRatio: 0,
-        capitalAdequacy: 0
+        currentRatio: { value: 0, isReliable: false },
+        quickRatio: { value: 0, isReliable: false },
+        debtToEquity: { value: 0, isReliable: false },
+        grossProfitMargin: { value: 0, isReliable: false },
+        netProfitMargin: { value: 0, isReliable: false },
+        operatingMargin: { value: 0, isReliable: false },
+        ebitdaMargin: { value: 0, isReliable: false },
+        returnOnAssets: { value: 0, isReliable: false },
+        returnOnEquity: { value: 0, isReliable: false },
+        assetTurnover: { value: 0, isReliable: false },
+        inventoryTurnover: { value: 0, isReliable: false },
+        interestCoverage: { value: 0, isReliable: false },
+        debtRatio: { value: 0, isReliable: false },
+        cashRatio: { value: 0, isReliable: false },
+        capitalAdequacy: { value: 0, isReliable: false },
+        dataQuality: { isValid: false, issues: [], corrections: {} }
       };
     }
 
-    const totalAssets = getValueByFieldAndYear("Balance Sheet", "Total Assets", year);
-    const currentAssets = getValueByFieldAndYear("Balance Sheet", "Current Assets", year);
-    const currentLiabilities = getValueByFieldAndYear("Balance Sheet", "Current Liabilities", year);
-    const totalLiabilities = getValueByFieldAndYear("Balance Sheet", "Total Liabilities", year);
-    const shareholderEquity = getValueByFieldAndYear("Balance Sheet", "Shareholder's Equity", year);
-    const totalRevenue = getValueByFieldAndYear("Income Statement", "Total Revenue", year);
-    const netProfit = getValueByFieldAndYear("Income Statement", "Net Profit", year);
-    const grossProfit = getValueByFieldAndYear("Income Statement", "Gross Profit", year);
-    const ebit = getValueByFieldAndYear("Income Statement", "EBIT", year);
-    const ebitda = getValueByFieldAndYear("Income Statement", "EBITDA", year);
-    const interestExpense = getValueByFieldAndYear("Income Statement", "Interest Expense", year);
-    const cogs = getValueByFieldAndYear("Income Statement", "Cost of Goods Sold (COGS)", year);
-    const inventory = getValueByFieldAndYear("Balance Sheet", "Inventory", year);
-    const cashAndEquivalents = getValueByFieldAndYear("Balance Sheet", "Cash and Cash Equivalents", year);
-
-    // Helper function to safely calculate ratios with validation
-    const safeCalculate = (numerator: number, denominator: number, isPercentage: boolean = false) => {
-      if (denominator === 0 || !isFinite(denominator) || !isFinite(numerator)) {
-        return 0;
-      }
-      const result = numerator / denominator;
-      return isPercentage ? result * 100 : result;
-    };
-
-    console.log('Financial Data Validation for Year', year);
-    console.log('Total Assets:', totalAssets);
-    console.log('Total Liabilities:', totalLiabilities);
-    console.log('Shareholder Equity:', shareholderEquity);
-    console.log('Balance Check (Assets = Liabilities + Equity):', totalAssets, '=', totalLiabilities + shareholderEquity);
-
-    // Validate balance sheet equation
-    const balanceSheetError = Math.abs(totalAssets - (totalLiabilities + shareholderEquity));
-    if (balanceSheetError > totalAssets * 0.01) { // Allow 1% tolerance
-      console.warn('Balance Sheet Equation Violation - Assets ≠ Liabilities + Equity');
-      console.warn('Difference:', balanceSheetError);
-    }
-
-    return {
-      // Liquidity Ratios
-      currentRatio: safeCalculate(currentAssets, currentLiabilities),
-      quickRatio: safeCalculate(currentAssets - inventory, currentLiabilities),
-      cashRatio: safeCalculate(cashAndEquivalents, currentLiabilities),
-      
-      // Leverage Ratios
-      debtToEquity: safeCalculate(totalLiabilities, shareholderEquity),
-      debtRatio: safeCalculate(totalLiabilities, totalAssets, true),
-      capitalAdequacy: safeCalculate(shareholderEquity, totalAssets, true),
-      
-      // Profitability Ratios
-      grossProfitMargin: safeCalculate(grossProfit, totalRevenue, true),
-      netProfitMargin: safeCalculate(netProfit, totalRevenue, true),
-      operatingMargin: safeCalculate(ebit, totalRevenue, true),
-      ebitdaMargin: safeCalculate(ebitda, totalRevenue, true),
-      returnOnAssets: safeCalculate(netProfit, totalAssets, true),
-      returnOnEquity: safeCalculate(netProfit, shareholderEquity, true),
-      
-      // Efficiency Ratios
-      assetTurnover: safeCalculate(totalRevenue, totalAssets),
-      inventoryTurnover: safeCalculate(cogs, inventory),
-      interestCoverage: safeCalculate(ebit, interestExpense)
-    };
+    return calculateRobustRatios(data, year);
   };
 
   const currentRatios = calculateRatios(selectedYear);
@@ -269,7 +211,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {currentRatios.currentRatio.toFixed(2)}
+                {currentRatios.currentRatio.isReliable ? currentRatios.currentRatio.value.toFixed(2) : 'N/A'}
               </div>
               <p className="text-xs text-muted-foreground">
                 Liquidity measure
@@ -284,7 +226,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {currentRatios.debtToEquity.toFixed(2)}
+                {currentRatios.debtToEquity.isReliable ? currentRatios.debtToEquity.value.toFixed(2) : 'N/A'}
               </div>
               <p className="text-xs text-muted-foreground">
                 Leverage indicator

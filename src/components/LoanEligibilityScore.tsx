@@ -4,27 +4,10 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, AlertTriangle, Shield, TrendingUp, DollarSign } from 'lucide-react';
-
-interface Ratios {
-  currentRatio: number;
-  quickRatio: number;
-  debtToEquity: number;
-  grossProfitMargin: number;
-  netProfitMargin: number;
-  operatingMargin: number;
-  ebitdaMargin: number;
-  returnOnAssets: number;
-  returnOnEquity: number;
-  assetTurnover: number;
-  inventoryTurnover: number;
-  interestCoverage: number;
-  debtRatio: number;
-  cashRatio: number;
-  capitalAdequacy: number;
-}
+import { RobustRatios } from '@/utils/ratioCalculations';
 
 interface LoanEligibilityScoreProps {
-  ratios: Ratios;
+  ratios: RobustRatios;
   year: number;
   detailed?: boolean;
 }
@@ -37,75 +20,80 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const calculateScore = () => {
     let score = 0;
     
+    // Helper function to get reliable value or 0
+    const getValue = (ratio: any) => {
+      return ratio.isReliable ? ratio.value : 0;
+    };
+    
     // Liquidity (25 points)
-    // Current Ratio (10 points)
-    if (ratios.currentRatio >= 2.0) score += 10;
-    else if (ratios.currentRatio >= 1.5) score += 7;
-    else if (ratios.currentRatio >= 1.0) score += 4;
+    const currentRatio = getValue(ratios.currentRatio);
+    if (currentRatio >= 2.0) score += 10;
+    else if (currentRatio >= 1.5) score += 7;
+    else if (currentRatio >= 1.0) score += 4;
     
-    // Quick Ratio (8 points)
-    if (ratios.quickRatio >= 1.0) score += 8;
-    else if (ratios.quickRatio >= 0.8) score += 5;
-    else if (ratios.quickRatio >= 0.5) score += 2;
+    const quickRatio = getValue(ratios.quickRatio);
+    if (quickRatio >= 1.0) score += 8;
+    else if (quickRatio >= 0.8) score += 5;
+    else if (quickRatio >= 0.5) score += 2;
     
-    // Cash Ratio (7 points)
-    if (ratios.cashRatio >= 0.5) score += 7;
-    else if (ratios.cashRatio >= 0.2) score += 4;
-    else if (ratios.cashRatio >= 0.1) score += 2;
+    const cashRatio = getValue(ratios.cashRatio);
+    if (cashRatio >= 0.5) score += 7;
+    else if (cashRatio >= 0.2) score += 4;
+    else if (cashRatio >= 0.1) score += 2;
     
     // Leverage (20 points)
-    // Debt to Equity (10 points)
-    if (ratios.debtToEquity > 0 && ratios.debtToEquity <= 1.0) score += 10;
-    else if (ratios.debtToEquity > 0 && ratios.debtToEquity <= 2.0) score += 7;
-    else if (ratios.debtToEquity > 0 && ratios.debtToEquity <= 3.0) score += 3;
+    const debtToEquity = getValue(ratios.debtToEquity);
+    if (debtToEquity > 0 && debtToEquity <= 1.0) score += 10;
+    else if (debtToEquity > 0 && debtToEquity <= 2.0) score += 7;
+    else if (debtToEquity > 0 && debtToEquity <= 3.0) score += 3;
     
-    // Capital Adequacy (10 points)
-    if (ratios.capitalAdequacy >= 50) score += 10;
-    else if (ratios.capitalAdequacy >= 30) score += 6;
-    else if (ratios.capitalAdequacy >= 20) score += 3;
+    const capitalAdequacy = getValue(ratios.capitalAdequacy);
+    if (capitalAdequacy >= 50) score += 10;
+    else if (capitalAdequacy >= 30) score += 6;
+    else if (capitalAdequacy >= 20) score += 3;
     
     // Profitability (25 points)
-    // Net Profit Margin (8 points)
-    if (ratios.netProfitMargin >= 10) score += 8;
-    else if (ratios.netProfitMargin >= 5) score += 5;
-    else if (ratios.netProfitMargin >= 2) score += 2;
+    const netProfitMargin = getValue(ratios.netProfitMargin);
+    if (netProfitMargin >= 10) score += 8;
+    else if (netProfitMargin >= 5) score += 5;
+    else if (netProfitMargin >= 2) score += 2;
     
-    // ROA (8 points)
-    if (ratios.returnOnAssets >= 15) score += 8;
-    else if (ratios.returnOnAssets >= 10) score += 5;
-    else if (ratios.returnOnAssets >= 5) score += 2;
+    const returnOnAssets = getValue(ratios.returnOnAssets);
+    if (returnOnAssets >= 15) score += 8;
+    else if (returnOnAssets >= 10) score += 5;
+    else if (returnOnAssets >= 5) score += 2;
     
-    // Operating Margin (9 points)
-    if (ratios.operatingMargin >= 15) score += 9;
-    else if (ratios.operatingMargin >= 8) score += 6;
-    else if (ratios.operatingMargin >= 5) score += 3;
+    const operatingMargin = getValue(ratios.operatingMargin);
+    if (operatingMargin >= 15) score += 9;
+    else if (operatingMargin >= 8) score += 6;
+    else if (operatingMargin >= 5) score += 3;
     
     // Efficiency & Coverage (20 points)
-    // Interest Coverage (8 points)
-    if (ratios.interestCoverage >= 5.0) score += 8;
-    else if (ratios.interestCoverage >= 2.5) score += 5;
-    else if (ratios.interestCoverage >= 1.5) score += 2;
+    const interestCoverage = getValue(ratios.interestCoverage);
+    if (interestCoverage >= 5.0) score += 8;
+    else if (interestCoverage >= 2.5) score += 5;
+    else if (interestCoverage >= 1.5) score += 2;
     
-    // Asset Turnover (6 points)
-    if (ratios.assetTurnover >= 1.5) score += 6;
-    else if (ratios.assetTurnover >= 1.0) score += 4;
-    else if (ratios.assetTurnover >= 0.5) score += 2;
+    const assetTurnover = getValue(ratios.assetTurnover);
+    if (assetTurnover >= 1.5) score += 6;
+    else if (assetTurnover >= 1.0) score += 4;
+    else if (assetTurnover >= 0.5) score += 2;
     
-    // Inventory Turnover (6 points)
-    if (ratios.inventoryTurnover >= 6.0) score += 6;
-    else if (ratios.inventoryTurnover >= 4.0) score += 4;
-    else if (ratios.inventoryTurnover >= 2.0) score += 2;
+    const inventoryTurnover = getValue(ratios.inventoryTurnover);
+    if (inventoryTurnover >= 6.0) score += 6;
+    else if (inventoryTurnover >= 4.0) score += 4;
+    else if (inventoryTurnover >= 2.0) score += 2;
     
     // Market Performance (10 points)
-    // Gross Profit Margin (5 points)
-    if (ratios.grossProfitMargin >= 30) score += 5;
-    else if (ratios.grossProfitMargin >= 20) score += 3;
-    else if (ratios.grossProfitMargin >= 15) score += 1;
+    const grossProfitMargin = getValue(ratios.grossProfitMargin);
+    if (grossProfitMargin >= 30) score += 5;
+    else if (grossProfitMargin >= 20) score += 3;
+    else if (grossProfitMargin >= 15) score += 1;
     
-    // ROE (5 points)
-    if (ratios.returnOnEquity >= 20) score += 5;
-    else if (ratios.returnOnEquity >= 15) score += 3;
-    else if (ratios.returnOnEquity >= 10) score += 1;
+    const returnOnEquity = getValue(ratios.returnOnEquity);
+    if (returnOnEquity >= 20) score += 5;
+    else if (returnOnEquity >= 15) score += 3;
+    else if (returnOnEquity >= 10) score += 1;
     
     return Math.round(score);
   };
@@ -154,56 +142,61 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
       name: 'Liquidity',
       weight: 25,
       score: Math.min(25, 
-        (ratios.currentRatio >= 2.0 ? 10 : ratios.currentRatio >= 1.5 ? 7 : ratios.currentRatio >= 1.0 ? 4 : 0) +
-        (ratios.quickRatio >= 1.0 ? 8 : ratios.quickRatio >= 0.8 ? 5 : ratios.quickRatio >= 0.5 ? 2 : 0) +
-        (ratios.cashRatio >= 0.5 ? 7 : ratios.cashRatio >= 0.2 ? 4 : ratios.cashRatio >= 0.1 ? 2 : 0)
+        (getValue(ratios.currentRatio) >= 2.0 ? 10 : getValue(ratios.currentRatio) >= 1.5 ? 7 : getValue(ratios.currentRatio) >= 1.0 ? 4 : 0) +
+        (getValue(ratios.quickRatio) >= 1.0 ? 8 : getValue(ratios.quickRatio) >= 0.8 ? 5 : getValue(ratios.quickRatio) >= 0.5 ? 2 : 0) +
+        (getValue(ratios.cashRatio) >= 0.5 ? 7 : getValue(ratios.cashRatio) >= 0.2 ? 4 : getValue(ratios.cashRatio) >= 0.1 ? 2 : 0)
       ),
-      metrics: `Current: ${ratios.currentRatio.toFixed(2)}, Quick: ${ratios.quickRatio.toFixed(2)}, Cash: ${ratios.cashRatio.toFixed(2)}`,
-      status: (ratios.currentRatio >= 1.5 && ratios.quickRatio >= 0.8) ? 'pass' : 'fail'
+      metrics: `Current: ${ratios.currentRatio.isReliable ? getValue(ratios.currentRatio).toFixed(2) : 'N/A'}, Quick: ${ratios.quickRatio.isReliable ? getValue(ratios.quickRatio).toFixed(2) : 'N/A'}, Cash: ${ratios.cashRatio.isReliable ? getValue(ratios.cashRatio).toFixed(2) : 'N/A'}`,
+      status: (getValue(ratios.currentRatio) >= 1.5 && getValue(ratios.quickRatio) >= 0.8 && ratios.currentRatio.isReliable && ratios.quickRatio.isReliable) ? 'pass' : 'fail'
     },
     {
       name: 'Leverage',
       weight: 20,
       score: Math.min(20,
-        (ratios.debtToEquity > 0 && ratios.debtToEquity <= 1.0 ? 10 : ratios.debtToEquity > 0 && ratios.debtToEquity <= 2.0 ? 7 : ratios.debtToEquity > 0 && ratios.debtToEquity <= 3.0 ? 3 : 0) +
-        (ratios.capitalAdequacy >= 50 ? 10 : ratios.capitalAdequacy >= 30 ? 6 : ratios.capitalAdequacy >= 20 ? 3 : 0)
+        (getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 1.0 ? 10 : getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 2.0 ? 7 : getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 3.0 ? 3 : 0) +
+        (getValue(ratios.capitalAdequacy) >= 50 ? 10 : getValue(ratios.capitalAdequacy) >= 30 ? 6 : getValue(ratios.capitalAdequacy) >= 20 ? 3 : 0)
       ),
-      metrics: `D/E: ${ratios.debtToEquity.toFixed(2)}, Capital Adequacy: ${ratios.capitalAdequacy.toFixed(1)}%`,
-      status: (ratios.debtToEquity > 0 && ratios.debtToEquity <= 2.0 && ratios.capitalAdequacy >= 30) ? 'pass' : 'fail'
+      metrics: `D/E: ${ratios.debtToEquity.isReliable ? getValue(ratios.debtToEquity).toFixed(2) : 'N/A'}, Capital Adequacy: ${ratios.capitalAdequacy.isReliable ? getValue(ratios.capitalAdequacy).toFixed(1) : 'N/A'}%`,
+      status: (getValue(ratios.debtToEquity) > 0 && getValue(ratios.debtToEquity) <= 2.0 && getValue(ratios.capitalAdequacy) >= 30) ? 'pass' : 'fail'
     },
     {
       name: 'Profitability',
       weight: 25,
       score: Math.min(25,
-        (ratios.netProfitMargin >= 10 ? 8 : ratios.netProfitMargin >= 5 ? 5 : ratios.netProfitMargin >= 2 ? 2 : 0) +
-        (ratios.returnOnAssets >= 15 ? 8 : ratios.returnOnAssets >= 10 ? 5 : ratios.returnOnAssets >= 5 ? 2 : 0) +
-        (ratios.operatingMargin >= 15 ? 9 : ratios.operatingMargin >= 8 ? 6 : ratios.operatingMargin >= 5 ? 3 : 0)
+        (getValue(ratios.netProfitMargin) >= 10 ? 8 : getValue(ratios.netProfitMargin) >= 5 ? 5 : getValue(ratios.netProfitMargin) >= 2 ? 2 : 0) +
+        (getValue(ratios.returnOnAssets) >= 15 ? 8 : getValue(ratios.returnOnAssets) >= 10 ? 5 : getValue(ratios.returnOnAssets) >= 5 ? 2 : 0) +
+        (getValue(ratios.operatingMargin) >= 15 ? 9 : getValue(ratios.operatingMargin) >= 8 ? 6 : getValue(ratios.operatingMargin) >= 5 ? 3 : 0)
       ),
-      metrics: `Net Margin: ${ratios.netProfitMargin.toFixed(1)}%, ROA: ${ratios.returnOnAssets.toFixed(1)}%`,
-      status: (ratios.netProfitMargin >= 5 && ratios.returnOnAssets >= 10) ? 'pass' : 'fail'
+      metrics: `Net Margin: ${ratios.netProfitMargin.isReliable ? getValue(ratios.netProfitMargin).toFixed(1) : 'N/A'}%, ROA: ${ratios.returnOnAssets.isReliable ? getValue(ratios.returnOnAssets).toFixed(1) : 'N/A'}%`,
+      status: (getValue(ratios.netProfitMargin) >= 5 && getValue(ratios.returnOnAssets) >= 10) ? 'pass' : 'fail'
     },
     {
       name: 'Efficiency & Coverage',
       weight: 20,
       score: Math.min(20,
-        (ratios.interestCoverage >= 5.0 ? 8 : ratios.interestCoverage >= 2.5 ? 5 : ratios.interestCoverage >= 1.5 ? 2 : 0) +
-        (ratios.assetTurnover >= 1.5 ? 6 : ratios.assetTurnover >= 1.0 ? 4 : ratios.assetTurnover >= 0.5 ? 2 : 0) +
-        (ratios.inventoryTurnover >= 6.0 ? 6 : ratios.inventoryTurnover >= 4.0 ? 4 : ratios.inventoryTurnover >= 2.0 ? 2 : 0)
+        (getValue(ratios.interestCoverage) >= 5.0 ? 8 : getValue(ratios.interestCoverage) >= 2.5 ? 5 : getValue(ratios.interestCoverage) >= 1.5 ? 2 : 0) +
+        (getValue(ratios.assetTurnover) >= 1.5 ? 6 : getValue(ratios.assetTurnover) >= 1.0 ? 4 : getValue(ratios.assetTurnover) >= 0.5 ? 2 : 0) +
+        (getValue(ratios.inventoryTurnover) >= 6.0 ? 6 : getValue(ratios.inventoryTurnover) >= 4.0 ? 4 : getValue(ratios.inventoryTurnover) >= 2.0 ? 2 : 0)
       ),
-      metrics: `Interest Coverage: ${ratios.interestCoverage.toFixed(1)}, Asset Turnover: ${ratios.assetTurnover.toFixed(2)}`,
-      status: (ratios.interestCoverage >= 2.5 && ratios.assetTurnover >= 1.0) ? 'pass' : 'fail'
+      metrics: `Interest Coverage: ${ratios.interestCoverage.isReliable ? getValue(ratios.interestCoverage).toFixed(1) : 'N/A'}, Asset Turnover: ${ratios.assetTurnover.isReliable ? getValue(ratios.assetTurnover).toFixed(2) : 'N/A'}`,
+      status: (getValue(ratios.interestCoverage) >= 2.5 && getValue(ratios.assetTurnover) >= 1.0) ? 'pass' : 'fail'
     },
     {
       name: 'Market Performance',
       weight: 10,
       score: Math.min(10,
-        (ratios.grossProfitMargin >= 30 ? 5 : ratios.grossProfitMargin >= 20 ? 3 : ratios.grossProfitMargin >= 15 ? 1 : 0) +
-        (ratios.returnOnEquity >= 20 ? 5 : ratios.returnOnEquity >= 15 ? 3 : ratios.returnOnEquity >= 10 ? 1 : 0)
+        (getValue(ratios.grossProfitMargin) >= 30 ? 5 : getValue(ratios.grossProfitMargin) >= 20 ? 3 : getValue(ratios.grossProfitMargin) >= 15 ? 1 : 0) +
+        (getValue(ratios.returnOnEquity) >= 20 ? 5 : getValue(ratios.returnOnEquity) >= 15 ? 3 : getValue(ratios.returnOnEquity) >= 10 ? 1 : 0)
       ),
-      metrics: `Gross Margin: ${ratios.grossProfitMargin.toFixed(1)}%, ROE: ${ratios.returnOnEquity.toFixed(1)}%`,
-      status: (ratios.grossProfitMargin >= 20 && ratios.returnOnEquity >= 15) ? 'pass' : 'fail'
+      metrics: `Gross Margin: ${ratios.grossProfitMargin.isReliable ? getValue(ratios.grossProfitMargin).toFixed(1) : 'N/A'}%, ROE: ${ratios.returnOnEquity.isReliable ? getValue(ratios.returnOnEquity).toFixed(1) : 'N/A'}%`,
+      status: (getValue(ratios.grossProfitMargin) >= 20 && getValue(ratios.returnOnEquity) >= 15) ? 'pass' : 'fail'
     }
   ];
+
+  // Helper function to get reliable value or 0
+  const getValue = (ratio: any) => {
+    return ratio.isReliable ? ratio.value : 0;
+  };
 
   return (
     <div className="space-y-6">
@@ -221,6 +214,16 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Data Quality Warning */}
+          {!ratios.dataQuality.isValid && (
+            <Alert className="border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>Data Quality Issues Detected:</strong> Some calculations may be unreliable due to data inconsistencies. Review the detailed analysis below.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex items-center justify-between">
             <div>
               <div className="text-4xl font-bold flex items-center gap-2">
@@ -276,6 +279,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
               <strong>CAD Loan Recommendation:</strong> {scoreData.recommendation}
               {score < 55 && " - Consider requiring additional security or trade credit insurance."}
               {score >= 85 && " - Eligible for expedited processing and competitive documentary credit terms."}
+              {!ratios.dataQuality.isValid && " - Recommendation subject to data quality verification."}
             </AlertDescription>
           </Alert>
         </CardContent>
