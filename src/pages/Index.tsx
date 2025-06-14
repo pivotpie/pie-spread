@@ -272,13 +272,16 @@ const Index = () => {
         </div>
 
         {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="statements" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="statements">Financial Statements</TabsTrigger>
+        <Tabs defaultValue="ratios" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ratios">Ratio Analysis</TabsTrigger>
+            <TabsTrigger value="statements">Financial Statements</TabsTrigger>
             <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
-            <TabsTrigger value="eligibility">CAD Assessment</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ratios">
+            <RatioAnalysis ratios={currentRatios} year={selectedYear} />
+          </TabsContent>
 
           <TabsContent value="statements" className="space-y-6">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -323,26 +326,8 @@ const Index = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="ratios">
-            <RatioAnalysis ratios={currentRatios} year={selectedYear} />
-          </TabsContent>
-
           <TabsContent value="trends">
             <TrendChart data={data} years={years} />
-          </TabsContent>
-
-          <TabsContent value="eligibility">
-            <div className="space-y-6">
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  This CAD loan eligibility assessment is based on standard banking ratios and trade finance criteria. 
-                  Final loan decisions require additional documentation and credit bureau verification.
-                </AlertDescription>
-              </Alert>
-              
-              <LoanEligibilityScore ratios={currentRatios} year={selectedYear} detailed={true} />
-            </div>
           </TabsContent>
         </Tabs>
 
