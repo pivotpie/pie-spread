@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -14,27 +13,35 @@ interface RatioAnalysisProps {
 
 export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) => {
   const getRatioStatus = (ratio: SafeRatioResult, good: number, acceptable: number, reverse: boolean = false) => {
-    const value = ratio.value;
-    
-    // Handle unreliable data
-    if (!ratio.isReliable || value < 0 || !isFinite(value) || isNaN(value)) {
+    // Handle unreliable data first
+    if (!ratio.isReliable || !isFinite(ratio.value) || isNaN(ratio.value)) {
       return { 
         status: 'poor', 
         icon: <XCircle className="h-4 w-4 text-red-500" />,
-        warning: ratio.warning
+        warning: ratio.warning || 'Data quality issue'
       };
     }
 
+    const value = ratio.value;
+
     if (reverse) {
       // For ratios where lower is better (debt ratios, leverage ratios)
-      if (value <= good) return { status: 'good', icon: <CheckCircle className="h-4 w-4 text-green-500" /> };
-      if (value <= acceptable) return { status: 'acceptable', icon: <AlertTriangle className="h-4 w-4 text-yellow-500" /> };
-      return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
+      if (value <= good) {
+        return { status: 'good', icon: <CheckCircle className="h-4 w-4 text-green-500" /> };
+      } else if (value <= acceptable) {
+        return { status: 'acceptable', icon: <AlertTriangle className="h-4 w-4 text-yellow-500" /> };
+      } else {
+        return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
+      }
     } else {
       // For ratios where higher is better (liquidity, profitability ratios)
-      if (value >= good) return { status: 'good', icon: <CheckCircle className="h-4 w-4 text-green-500" /> };
-      if (value >= acceptable) return { status: 'acceptable', icon: <AlertTriangle className="h-4 w-4 text-yellow-500" /> };
-      return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
+      if (value >= good) {
+        return { status: 'good', icon: <CheckCircle className="h-4 w-4 text-green-500" /> };
+      } else if (value >= acceptable) {
+        return { status: 'acceptable', icon: <AlertTriangle className="h-4 w-4 text-yellow-500" /> };
+      } else {
+        return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
+      }
     }
   };
 
@@ -256,9 +263,9 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
                   <div className="text-xs text-gray-600">
                     <strong>Benchmark:</strong> {ratioItem.benchmark}
                   </div>
-                  {ratioItem.ratio.warning && (
+                  {(ratioItem.ratio.warning || ratioItem.analysis.warning) && (
                     <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
-                      <strong>Warning:</strong> {ratioItem.ratio.warning}
+                      <strong>Warning:</strong> {ratioItem.ratio.warning || ratioItem.analysis.warning}
                     </div>
                   )}
                 </CardContent>
