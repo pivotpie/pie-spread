@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -141,10 +140,10 @@ const Index = () => {
         <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
-                <FileSpreadsheet className="h-8 w-8 text-white" />
+              <div className="p-3 bg-white rounded-xl shadow-lg">
+                <img src="/lovable-uploads/88e0819a-d452-409b-88c3-b00337939bff.png" alt="Pie-Spread Logo" className="h-8 w-8" />
               </div>
-              CAD Loan Assessment Platform
+              Pie-Spread
             </h1>
             <p className="text-slate-600 mt-3 text-lg">Cash Against Documents - Financial Analysis & Risk Assessment</p>
           </div>
