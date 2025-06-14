@@ -126,6 +126,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.currentRatio,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Ability to pay short-term obligations',
+          formula: 'Current Assets ÷ Current Liabilities',
           benchmark: 'Good: ≥2.0, Acceptable: ≥1.5',
           analysis: getRatioStatus(ratios.currentRatio, 2.0, 1.5, false)
         },
@@ -134,6 +135,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.quickRatio,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Liquidity excluding inventory',
+          formula: '(Current Assets - Inventory) ÷ Current Liabilities',
           benchmark: 'Good: ≥1.0, Acceptable: ≥0.8',
           analysis: getRatioStatus(ratios.quickRatio, 1.0, 0.8, false)
         },
@@ -142,6 +144,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.cashRatio,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Cash coverage of current liabilities',
+          formula: 'Cash and Cash Equivalents ÷ Current Liabilities',
           benchmark: 'Good: ≥0.5, Acceptable: ≥0.2',
           analysis: getRatioStatus(ratios.cashRatio, 0.5, 0.2, false)
         }
@@ -155,6 +158,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.debtToEquity,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Financial leverage and capital structure',
+          formula: 'Total Liabilities ÷ Shareholder\'s Equity',
           benchmark: 'Good: ≤1.0, Acceptable: ≤2.0',
           analysis: getRatioStatus(ratios.debtToEquity, 1.0, 2.0, true)
         },
@@ -163,6 +167,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.debtRatio,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Proportion of assets financed by debt',
+          formula: '(Total Liabilities ÷ Total Assets) × 100',
           benchmark: 'Good: ≤40%, Acceptable: ≤60%',
           analysis: getRatioStatus(ratios.debtRatio, 40, 60, true)
         },
@@ -171,6 +176,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.capitalAdequacy,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Equity cushion relative to total assets',
+          formula: '(Shareholder\'s Equity ÷ Total Assets) × 100',
           benchmark: 'Good: ≥50%, Acceptable: ≥30%',
           analysis: getRatioStatus(ratios.capitalAdequacy, 50, 30, false)
         }
@@ -184,6 +190,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.grossProfitMargin,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Gross profitability relative to revenue',
+          formula: '(Gross Profit ÷ Total Revenue) × 100',
           benchmark: 'Good: ≥30%, Acceptable: ≥20%',
           analysis: getRatioStatus(ratios.grossProfitMargin, 30, 20, false)
         },
@@ -192,6 +199,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.netProfitMargin,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Net profitability relative to revenue',
+          formula: '(Net Profit ÷ Total Revenue) × 100',
           benchmark: 'Good: ≥10%, Acceptable: ≥5%',
           analysis: getRatioStatus(ratios.netProfitMargin, 10, 5, false)
         },
@@ -200,6 +208,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.operatingMargin,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Operating efficiency and profitability',
+          formula: '(EBIT ÷ Total Revenue) × 100',
           benchmark: 'Good: ≥15%, Acceptable: ≥8%',
           analysis: getRatioStatus(ratios.operatingMargin, 15, 8, false)
         },
@@ -208,6 +217,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.ebitdaMargin,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Operating performance before financing',
+          formula: '(EBITDA ÷ Total Revenue) × 100',
           benchmark: 'Good: ≥20%, Acceptable: ≥12%',
           analysis: getRatioStatus(ratios.ebitdaMargin, 20, 12, false)
         }
@@ -221,6 +231,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.returnOnAssets,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Efficiency in using assets to generate profit',
+          formula: '(Net Profit ÷ Total Assets) × 100',
           benchmark: 'Good: ≥15%, Acceptable: ≥10%',
           analysis: getRatioStatus(ratios.returnOnAssets, 15, 10, false)
         },
@@ -229,6 +240,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.returnOnEquity,
           format: (r: SafeRatioResult) => formatRatioValue(r, true),
           description: 'Returns generated on shareholders equity',
+          formula: '(Net Profit ÷ Shareholder\'s Equity) × 100',
           benchmark: 'Good: ≥20%, Acceptable: ≥15%',
           analysis: getRatioStatus(ratios.returnOnEquity, 20, 15, false)
         },
@@ -237,6 +249,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.assetTurnover,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Efficiency of asset utilization',
+          formula: 'Total Revenue ÷ Total Assets',
           benchmark: 'Good: ≥1.5, Acceptable: ≥1.0',
           analysis: getRatioStatus(ratios.assetTurnover, 1.5, 1.0, false)
         },
@@ -245,6 +258,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.inventoryTurnover,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Inventory management efficiency',
+          formula: 'Cost of Goods Sold ÷ Inventory',
           benchmark: 'Good: ≥6.0, Acceptable: ≥4.0',
           analysis: getRatioStatus(ratios.inventoryTurnover, 6.0, 4.0, false)
         },
@@ -253,6 +267,7 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
           ratio: ratios.interestCoverage,
           format: (r: SafeRatioResult) => formatRatioValue(r),
           description: 'Ability to service interest payments',
+          formula: 'EBIT ÷ Interest Expense',
           benchmark: 'Good: ≥5.0, Acceptable: ≥2.5',
           analysis: getRatioStatus(ratios.interestCoverage, 5.0, 2.5, false)
         }
@@ -316,6 +331,9 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
                       {ratioItem.analysis.icon}
                     </div>
                     <CardDescription className="text-xs text-slate-500 pt-1">{ratioItem.description}</CardDescription>
+                    <div className="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-1 rounded mt-2">
+                      <strong>Formula:</strong> {ratioItem.formula}
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
