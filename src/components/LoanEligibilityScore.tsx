@@ -342,7 +342,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
               </div>
               <Progress value={score} className="mb-4 h-3" />
               <Alert className="mb-4">
-                <recommendation.icon />
+                {recommendation.icon}
                 <AlertDescription className="text-sm font-medium">
                   {recommendation.message}
                 </AlertDescription>
