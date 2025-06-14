@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -43,6 +44,71 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
         return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
       }
     }
+  };
+
+  const getContextualExplanation = (ratioName: string, ratio: SafeRatioResult, analysis: any) => {
+    if (!ratio.isReliable) {
+      return "Unable to calculate due to data quality issues. Please verify the financial data accuracy.";
+    }
+
+    const value = ratio.value;
+
+    switch (ratioName) {
+      case 'Current Ratio':
+        if (value < 1.0) return "Current ratio below 1.0 indicates potential liquidity problems - current liabilities exceed current assets.";
+        if (value < 1.5) return "Current ratio below 1.5 suggests tight liquidity position for trade finance operations.";
+        if (value > 3.0) return "Very high current ratio may indicate inefficient use of assets or excessive cash holdings.";
+        break;
+
+      case 'Quick Ratio':
+        if (value < 0.5) return "Quick ratio below 0.5 indicates severe liquidity constraints without relying on inventory conversion.";
+        if (value < 0.8) return "Quick ratio below 0.8 suggests potential difficulty meeting short-term obligations quickly.";
+        break;
+
+      case 'Debt-to-Equity Ratio':
+        if (value > 3.0) return "Debt-to-equity above 3.0 indicates excessive leverage and high financial risk for lenders.";
+        if (value > 2.0) return "Debt-to-equity above 2.0 suggests high leverage - company relies heavily on debt financing.";
+        if (value > 5.0) return "Extreme leverage indicates potential insolvency risk and makes CAD lending highly risky.";
+        break;
+
+      case 'Debt Ratio (%)':
+        if (value > 80) return "Debt ratio above 80% indicates very high financial leverage and limited equity cushion.";
+        if (value > 100) return "Debt ratio above 100% suggests negative equity - liabilities exceed assets, indicating insolvency risk.";
+        if (value > 60) return "Debt ratio above 60% indicates moderate to high leverage that may limit borrowing capacity.";
+        break;
+
+      case 'Capital Adequacy Ratio (%)':
+        if (value < 20) return "Capital adequacy below 20% indicates insufficient equity buffer for absorbing losses.";
+        if (value < 30) return "Capital adequacy below 30% suggests limited financial resilience for trade finance operations.";
+        if (value < 0) return "Negative capital adequacy indicates insolvency - liabilities exceed assets.";
+        break;
+
+      case 'Net Profit Margin (%)':
+        if (value < 0) return "Negative profit margin indicates the company is operating at a loss, reducing repayment capacity.";
+        if (value < 2) return "Very low profit margin suggests minimal profitability and limited cash generation capability.";
+        break;
+
+      case 'Interest Coverage':
+        if (value < 1.5) return "Interest coverage below 1.5 indicates difficulty servicing debt obligations and high default risk.";
+        if (value < 2.5) return "Interest coverage below 2.5 suggests limited ability to handle additional debt service.";
+        if (value < 1.0) return "Interest coverage below 1.0 means earnings are insufficient to cover interest payments.";
+        break;
+
+      case 'Return on Assets (%)':
+        if (value < 0) return "Negative ROA indicates the company is generating losses relative to its asset base.";
+        if (value < 5) return "Low ROA suggests inefficient asset utilization and weak profitability.";
+        break;
+
+      case 'Return on Equity (%)':
+        if (value < 0) return "Negative ROE indicates losses are eroding shareholder value and equity base.";
+        if (value < 10) return "Low ROE suggests poor returns for shareholders and limited reinvestment capacity.";
+        break;
+
+      default:
+        return null;
+    }
+
+    return null;
   };
 
   const formatRatioValue = (ratio: SafeRatioResult, isPercentage: boolean = false): string => {
@@ -240,37 +306,53 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
         <div key={categoryIndex} className="space-y-4">
           <h3 className="text-xl font-semibold text-gray-800 border-b pb-2">{category.category}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {category.ratios.map((ratioItem, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">{ratioItem.name}</CardTitle>
-                    {ratioItem.analysis.icon}
-                  </div>
-                  <CardDescription className="text-xs">{ratioItem.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold">{ratioItem.format(ratioItem.ratio)}</span>
-                    <Badge 
-                      variant={ratioItem.analysis.status === 'good' ? 'default' : 
-                              ratioItem.analysis.status === 'acceptable' ? 'secondary' : 'destructive'}
-                      className="text-xs"
-                    >
-                      {ratioItem.analysis.status.charAt(0).toUpperCase() + ratioItem.analysis.status.slice(1)}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    <strong>Benchmark:</strong> {ratioItem.benchmark}
-                  </div>
-                  {(ratioItem.ratio.warning || ratioItem.analysis.warning) && (
-                    <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
-                      <strong>Warning:</strong> {ratioItem.ratio.warning || ratioItem.analysis.warning}
+            {category.ratios.map((ratioItem, index) => {
+              const contextualExplanation = getContextualExplanation(ratioItem.name, ratioItem.ratio, ratioItem.analysis);
+              
+              return (
+                <Card key={index}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm">{ratioItem.name}</CardTitle>
+                      {ratioItem.analysis.icon}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    <CardDescription className="text-xs">{ratioItem.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold">{ratioItem.format(ratioItem.ratio)}</span>
+                      <Badge 
+                        variant={ratioItem.analysis.status === 'good' ? 'default' : 
+                                ratioItem.analysis.status === 'acceptable' ? 'secondary' : 'destructive'}
+                        className="text-xs"
+                      >
+                        {ratioItem.analysis.status.charAt(0).toUpperCase() + ratioItem.analysis.status.slice(1)}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <strong>Benchmark:</strong> {ratioItem.benchmark}
+                    </div>
+                    
+                    {/* Contextual Explanation */}
+                    {contextualExplanation && (
+                      <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
+                        <div className="flex items-start gap-1">
+                          <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <span><strong>Impact:</strong> {contextualExplanation}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Technical Warnings */}
+                    {(ratioItem.ratio.warning || ratioItem.analysis.warning) && (
+                      <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                        <strong>Warning:</strong> {ratioItem.ratio.warning || ratioItem.analysis.warning}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       ))}
