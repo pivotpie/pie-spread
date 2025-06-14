@@ -57,11 +57,11 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
     }
   ];
 
-  // Revenue Trend
+  // Revenue Trend - Fixed to use actual year from loop
   const revenueTrendData = years.map(year => ({
     year,
-    Revenue: getValueByFieldAndYear("Income Statement", "Total Revenue", selectedYear) / 1000000,
-    'Net Profit': getValueByFieldAndYear("Income Statement", "Net Profit", selectedYear) / 1000000
+    Revenue: getValueByFieldAndYear("Income Statement", "Total Revenue", year) / 1000000,
+    'Net Profit': getValueByFieldAndYear("Income Statement", "Net Profit", year) / 1000000
   }));
 
   // Cash Flow Breakdown
