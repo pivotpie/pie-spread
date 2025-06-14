@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { CheckCircle, XCircle, AlertTriangle, Shield, TrendingUp, DollarSign, Calculator } from 'lucide-react';
 import { RobustRatios } from '@/utils/ratioCalculations';
 import { EditableLoanForm } from './EditableLoanForm';
@@ -152,6 +153,57 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
     repaymentTermYears: calculateInitialLoanSuggestion.repaymentTermYears,
     monthlyEMI: 0
   });
+
+  // Enhanced payability analysis calculations
+  const payabilityAnalysis = useMemo(() => {
+    const score = calculateScore();
+    const totalMonths = currentLoanParams.repaymentTermYears * 12;
+    
+    // Calculate financial health indicators for each quarter
+    const quarters = Math.ceil(totalMonths / 3); // 3-month quarters
+    const quarterlyData = [];
+    
+    // Base financial health metrics
+    const liquidityScore = Math.min(100, (getValue(ratios.currentRatio) / 2.0) * 100);
+    const leverageScore = Math.max(0, 100 - (getValue(ratios.debtToEquity) / 3.0) * 100);
+    const profitabilityScore = Math.min(100, (getValue(ratios.netProfitMargin) / 15) * 100);
+    const coverageScore = Math.min(100, (getValue(ratios.interestCoverage) / 5.0) * 100);
+    
+    for (let i = 0; i < quarters; i++) {
+      const quarterProgress = i / quarters;
+      
+      // Simulate slight deterioration over time due to market conditions
+      const timeDecay = 1 - (quarterProgress * 0.1); // 10% potential decline over term
+      
+      // Calculate composite health score for this quarter
+      const compositeHealth = (
+        liquidityScore * 0.3 + 
+        leverageScore * 0.25 + 
+        profitabilityScore * 0.25 + 
+        coverageScore * 0.2
+      ) * timeDecay;
+      
+      // Add some realistic variation based on business cycles
+      const cyclicalVariation = Math.sin(quarterProgress * Math.PI * 2) * 5;
+      const finalHealth = Math.max(20, Math.min(100, compositeHealth + cyclicalVariation));
+      
+      // Determine risk level
+      let riskLevel: 'low' | 'medium' | 'high';
+      if (finalHealth >= 70) riskLevel = 'low';
+      else if (finalHealth >= 50) riskLevel = 'medium';
+      else riskLevel = 'high';
+      
+      quarterlyData.push({
+        quarter: i + 1,
+        healthScore: finalHealth,
+        riskLevel,
+        quarterLabel: `Q${(i % 4) + 1} Y${Math.floor(i / 4) + 1}`,
+        cumulativePayment: (i + 1) * 3 * currentLoanParams.monthlyEMI
+      });
+    }
+    
+    return quarterlyData;
+  }, [ratios, currentLoanParams]);
 
   const score = calculateScore();
   
@@ -332,14 +384,14 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 onLoanParamsChange={setCurrentLoanParams}
               />
               
-              {/* Payability Visualization */}
+              {/* Enhanced Payability Visualization */}
               <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-green-200">
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <TrendingUp className="h-6 w-6 text-green-600" />
                     <div>
                       <CardTitle className="text-xl text-gray-900">Loan Payability Analysis</CardTitle>
-                      <CardDescription className="text-gray-600">Visual assessment of repayment capacity</CardDescription>
+                      <CardDescription className="text-gray-600">Financial health projection over repayment period</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -377,29 +429,68 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                     </div>
                   </div>
                   
+                  {/* Enhanced Data-Driven Visualization */}
                   <div className="space-y-4">
-                    <h5 className="font-semibold text-gray-700">Payability Score Visualization</h5>
-                    <div className="grid grid-cols-12 gap-1 h-20 items-end">
-                      {Array.from({ length: 36 }, (_, index) => (
-                        <div
-                          key={index}
-                          className={`${
-                            index < Math.floor((score / 100) * 36)
-                              ? 'bg-green-500'
-                              : 'bg-gray-200'
-                          } rounded-sm transition-all duration-200`}
-                          style={{
-                            height: `${Math.max(20, Math.random() * 60 + 20)}%`
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <h5 className="font-semibold text-gray-700">Financial Health Timeline</h5>
+                    
+                    <TooltipProvider>
+                      <div className="grid grid-cols-12 gap-1 h-24 items-end p-2 bg-white rounded border">
+                        {payabilityAnalysis.map((quarter, index) => {
+                          const barHeight = (quarter.healthScore / 100) * 100;
+                          const barColor = 
+                            quarter.riskLevel === 'low' ? 'bg-green-500' :
+                            quarter.riskLevel === 'medium' ? 'bg-yellow-500' : 'bg-red-500';
+                          
+                          return (
+                            <Tooltip key={index}>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className={`${barColor} rounded-sm transition-all duration-300 hover:opacity-80 cursor-pointer`}
+                                  style={{ height: `${Math.max(10, barHeight)}%` }}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-900 text-white p-3 rounded-lg">
+                                <div className="text-xs space-y-1">
+                                  <div><strong>{quarter.quarterLabel}</strong></div>
+                                  <div>Health Score: {quarter.healthScore.toFixed(1)}%</div>
+                                  <div>Risk Level: {quarter.riskLevel.charAt(0).toUpperCase() + quarter.riskLevel.slice(1)}</div>
+                                  <div>Cumulative Paid: AED {quarter.cumulativePayment.toLocaleString()}</div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </TooltipProvider>
+                    
                     <div className="flex justify-between text-xs text-gray-600">
-                      <span>Repayment Timeline</span>
-                      <span>{currentLoanParams.repaymentTermYears * 12} Months</span>
+                      <span>Start</span>
+                      <span>Loan Term ({currentLoanParams.repaymentTermYears * 12} Months)</span>
+                      <span>End</span>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <strong>Payability Rating:</strong> {scoreData.category} - Based on current financial health
+                    
+                    {/* Risk Level Legend */}
+                    <div className="flex justify-center gap-6 text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-green-500 rounded"></div>
+                        <span>Low Risk</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                        <span>Medium Risk</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-red-500 rounded"></div>
+                        <span>High Risk</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 space-y-2">
+                      <div><strong>Analysis Summary:</strong></div>
+                      <div>• Timeline shows quarterly financial health projections</div>
+                      <div>• Height indicates relative financial strength</div>
+                      <div>• Colors represent repayment risk levels</div>
+                      <div>• Based on liquidity, leverage, profitability, and coverage ratios</div>
                     </div>
                   </div>
                 </CardContent>
