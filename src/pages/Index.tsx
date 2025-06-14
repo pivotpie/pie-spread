@@ -121,29 +121,51 @@ const Index = () => {
     const inventory = getValueByFieldAndYear("Balance Sheet", "Inventory", year);
     const cashAndEquivalents = getValueByFieldAndYear("Balance Sheet", "Cash and Cash Equivalents", year);
 
+    // Helper function to safely calculate ratios with validation
+    const safeCalculate = (numerator: number, denominator: number, isPercentage: boolean = false) => {
+      if (denominator === 0 || !isFinite(denominator) || !isFinite(numerator)) {
+        return 0;
+      }
+      const result = numerator / denominator;
+      return isPercentage ? result * 100 : result;
+    };
+
+    console.log('Financial Data Validation for Year', year);
+    console.log('Total Assets:', totalAssets);
+    console.log('Total Liabilities:', totalLiabilities);
+    console.log('Shareholder Equity:', shareholderEquity);
+    console.log('Balance Check (Assets = Liabilities + Equity):', totalAssets, '=', totalLiabilities + shareholderEquity);
+
+    // Validate balance sheet equation
+    const balanceSheetError = Math.abs(totalAssets - (totalLiabilities + shareholderEquity));
+    if (balanceSheetError > totalAssets * 0.01) { // Allow 1% tolerance
+      console.warn('Balance Sheet Equation Violation - Assets ≠ Liabilities + Equity');
+      console.warn('Difference:', balanceSheetError);
+    }
+
     return {
       // Liquidity Ratios
-      currentRatio: currentLiabilities !== 0 ? currentAssets / currentLiabilities : 0,
-      quickRatio: currentLiabilities !== 0 ? (currentAssets - inventory) / currentLiabilities : 0,
-      cashRatio: currentLiabilities !== 0 ? cashAndEquivalents / currentLiabilities : 0,
+      currentRatio: safeCalculate(currentAssets, currentLiabilities),
+      quickRatio: safeCalculate(currentAssets - inventory, currentLiabilities),
+      cashRatio: safeCalculate(cashAndEquivalents, currentLiabilities),
       
       // Leverage Ratios
-      debtToEquity: shareholderEquity !== 0 ? totalLiabilities / shareholderEquity : 0,
-      debtRatio: totalAssets !== 0 ? (totalLiabilities / totalAssets) * 100 : 0,
-      capitalAdequacy: totalAssets !== 0 ? (shareholderEquity / totalAssets) * 100 : 0,
+      debtToEquity: safeCalculate(totalLiabilities, shareholderEquity),
+      debtRatio: safeCalculate(totalLiabilities, totalAssets, true),
+      capitalAdequacy: safeCalculate(shareholderEquity, totalAssets, true),
       
       // Profitability Ratios
-      grossProfitMargin: totalRevenue !== 0 ? (grossProfit / totalRevenue) * 100 : 0,
-      netProfitMargin: totalRevenue !== 0 ? (netProfit / totalRevenue) * 100 : 0,
-      operatingMargin: totalRevenue !== 0 ? (ebit / totalRevenue) * 100 : 0,
-      ebitdaMargin: totalRevenue !== 0 ? (ebitda / totalRevenue) * 100 : 0,
-      returnOnAssets: totalAssets !== 0 ? (netProfit / totalAssets) * 100 : 0,
-      returnOnEquity: shareholderEquity !== 0 ? (netProfit / shareholderEquity) * 100 : 0,
+      grossProfitMargin: safeCalculate(grossProfit, totalRevenue, true),
+      netProfitMargin: safeCalculate(netProfit, totalRevenue, true),
+      operatingMargin: safeCalculate(ebit, totalRevenue, true),
+      ebitdaMargin: safeCalculate(ebitda, totalRevenue, true),
+      returnOnAssets: safeCalculate(netProfit, totalAssets, true),
+      returnOnEquity: safeCalculate(netProfit, shareholderEquity, true),
       
       // Efficiency Ratios
-      assetTurnover: totalAssets !== 0 ? totalRevenue / totalAssets : 0,
-      inventoryTurnover: inventory !== 0 ? cogs / inventory : 0,
-      interestCoverage: interestExpense !== 0 ? ebit / interestExpense : 0
+      assetTurnover: safeCalculate(totalRevenue, totalAssets),
+      inventoryTurnover: safeCalculate(cogs, inventory),
+      interestCoverage: safeCalculate(ebit, interestExpense)
     };
   };
 
