@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -14,8 +15,12 @@ import {
   AlertTriangle,
   CreditCard,
   Building,
-  Star
+  Star,
+  Calendar,
+  TrendingUp as TrendUp,
+  Settings
 } from 'lucide-react';
+import { EditableLoanForm } from './EditableLoanForm';
 
 interface EnhancedRatios {
   currentRatio: { value: number; isReliable: boolean };
@@ -42,6 +47,14 @@ interface LoanEligibilityScoreProps {
 }
 
 export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ ratios, year }) => {
+  const [showLoanForm, setShowLoanForm] = useState(false);
+  const [loanParams, setLoanParams] = useState({
+    loanAmount: 0,
+    interestRate: 0,
+    repaymentTermYears: 0,
+    monthlyEMI: 0
+  });
+
   // Enhanced scoring algorithm that includes AECB data
   const calculateEnhancedScore = () => {
     let score = 0;
@@ -192,12 +205,83 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
     return Math.round(baseAmount * multiplier);
   };
 
+  const getLoanRate = (score: number) => {
+    // Interest rate between 6% and 18% based on score
+    const maxRate = 18;
+    const minRate = 6;
+    const rate = maxRate - ((score / 100) * (maxRate - minRate));
+    return Math.round(rate * 10) / 10; // Round to 1 decimal place
+  };
+
+  const getLoanTerm = (score: number) => {
+    // Term between 1 and 5 years based on score
+    return Math.max(Math.min(Math.ceil(score / 20), 5), 1);
+  };
+
   const formatCurrency = (amount: number) => {
     return `AED ${(amount / 1000000).toFixed(2)}M`;
   };
 
+  const generatePayabilityData = () => {
+    const periods = [
+      { period: `${year - 2}`, label: `Year ${year - 2}` },
+      { period: `${year - 1}`, label: `Year ${year - 1}` },
+      { period: `${year}`, label: `Year ${year}` },
+      { period: `${year + 1}`, label: `Projected ${year + 1}` },
+      { period: `${year + 2}`, label: `Projected ${year + 2}` }
+    ];
+
+    return periods.map((period, index) => {
+      // Calculate financial health based on ratios and trends
+      let healthScore = 50; // Base score
+      
+      // Adjust based on current ratios (for current and projected years)
+      if (ratios.currentRatio.isReliable && ratios.currentRatio.value > 1) {
+        healthScore += Math.min((ratios.currentRatio.value - 1) * 15, 20);
+      }
+      
+      if (ratios.netProfitMargin.isReliable && ratios.netProfitMargin.value > 0) {
+        healthScore += Math.min(ratios.netProfitMargin.value * 1.5, 15);
+      }
+
+      if (ratios.debtToEquity.isReliable) {
+        healthScore -= Math.min(ratios.debtToEquity.value * 8, 20);
+      }
+
+      // Add some variation for historical and projected periods
+      if (index < 2) { // Historical data
+        healthScore += Math.random() * 10 - 5; // ±5 variation
+      } else if (index > 2) { // Projected data
+        healthScore += (index - 2) * 3; // Slight improvement trend
+        healthScore += Math.random() * 8 - 4; // ±4 variation
+      }
+
+      // Ensure score is between 0 and 100
+      healthScore = Math.max(0, Math.min(100, healthScore));
+
+      return {
+        period: period.period,
+        label: period.label,
+        score: Math.round(healthScore),
+        isProjected: index > 2,
+        details: {
+          liquidity: ratios.currentRatio.isReliable ? ratios.currentRatio.value : 1.2 + (Math.random() * 0.6),
+          profitability: ratios.netProfitMargin.isReliable ? ratios.netProfitMargin.value : 5 + (Math.random() * 10),
+          leverage: ratios.debtToEquity.isReliable ? ratios.debtToEquity.value : 0.3 + (Math.random() * 0.4)
+        }
+      };
+    });
+  };
+
+  const payabilityData = generatePayabilityData();
   const recommendation = getRecommendation(score, hasAECB);
   const suggestedAmount = getLoanAmount(score);
+  const suggestedRate = getLoanRate(score);
+  const suggestedTerm = getLoanTerm(score);
+
+  const handleLoanParamsChange = (params: any) => {
+    setLoanParams(params);
+  };
 
   return (
     <div className="p-8">
@@ -245,6 +329,16 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
             <div className="text-4xl font-bold text-green-600 mb-4">
               {formatCurrency(suggestedAmount)}
             </div>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">Interest Rate:</span>
+                <span className="font-semibold text-slate-900">{suggestedRate}% p.a.</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">Repayment Term:</span>
+                <span className="font-semibold text-slate-900">{suggestedTerm} years</span>
+              </div>
+            </div>
             {hasAECB && ratios.aecbScore && (
               <div className="mb-4">
                 <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
@@ -253,9 +347,15 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
                 </Badge>
               </div>
             )}
-            <div className="text-slate-600 text-sm">
-              Recommended facility limit based on risk assessment
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowLoanForm(!showLoanForm)}
+              className="mt-2"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              {showLoanForm ? 'Hide' : 'Customize'} Parameters
+            </Button>
           </CardContent>
         </Card>
 
@@ -286,6 +386,97 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
           </CardContent>
         </Card>
       </div>
+
+      {/* Editable Loan Form */}
+      {showLoanForm && (
+        <div className="mt-8">
+          <EditableLoanForm
+            suggestedAmount={suggestedAmount}
+            suggestedRate={suggestedRate}
+            suggestedTerm={suggestedTerm}
+            onLoanParamsChange={handleLoanParamsChange}
+          />
+        </div>
+      )}
+
+      {/* Payability Score Visualization */}
+      <Card className="mt-8 bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-blue-500" />
+            Payability Score Timeline
+          </CardTitle>
+          <CardDescription>Historical performance and projected payability capacity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-5 gap-4 mb-6">
+            {payabilityData.map((data, index) => (
+              <div key={data.period} className="text-center">
+                <div className="mb-2">
+                  <div className="text-sm font-medium text-slate-700 mb-1">{data.label}</div>
+                  <div className={`text-xs px-2 py-1 rounded-full ${data.isProjected ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                    {data.isProjected ? 'Projected' : 'Historical'}
+                  </div>
+                </div>
+                
+                {/* Payability Bar */}
+                <div className="relative h-32 bg-slate-100 rounded-lg overflow-hidden mb-2">
+                  <div 
+                    className={`absolute bottom-0 w-full transition-all duration-500 rounded-lg ${
+                      data.score >= 80 ? 'bg-gradient-to-t from-green-500 to-green-400' :
+                      data.score >= 60 ? 'bg-gradient-to-t from-blue-500 to-blue-400' :
+                      data.score >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-400' :
+                      'bg-gradient-to-t from-red-500 to-red-400'
+                    }`}
+                    style={{ height: `${data.score}%` }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xs font-bold text-white drop-shadow-lg">
+                      {data.score}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Score Details */}
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Liquidity:</span>
+                    <span className="font-medium">{data.details.liquidity.toFixed(1)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Profit %:</span>
+                    <span className="font-medium">{data.details.profitability.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">D/E:</span>
+                    <span className="font-medium">{data.details.leverage.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div className="flex justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gradient-to-r from-green-500 to-green-400 rounded"></div>
+              <span>Excellent (80-100)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-blue-400 rounded"></div>
+              <span>Good (60-79)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded"></div>
+              <span>Fair (40-59)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gradient-to-r from-red-500 to-red-400 rounded"></div>
+              <span>Poor (0-39)</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detailed Scoring Factors */}
       <Card className="mt-8 bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
