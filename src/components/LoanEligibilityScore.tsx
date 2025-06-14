@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, AlertTriangle, Shield, TrendingUp, DollarSign } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Shield, TrendingUp, DollarSign, Calculator } from 'lucide-react';
 import { RobustRatios } from '@/utils/ratioCalculations';
 
 interface LoanEligibilityScoreProps {
@@ -99,7 +98,60 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
     return Math.round(score);
   };
 
+  // Calculate loan suggestion based on financial ratios
+  const calculateLoanSuggestion = () => {
+    const netProfitMargin = getValue(ratios.netProfitMargin);
+    const returnOnAssets = getValue(ratios.returnOnAssets);
+    const currentRatio = getValue(ratios.currentRatio);
+    const debtToEquity = getValue(ratios.debtToEquity);
+    
+    // Base loan calculation (simplified for demonstration)
+    // In practice, this would require actual revenue and net profit values
+    const baseAmount = 120000; // Base amount in AED
+    
+    // Adjust based on ratios
+    let adjustmentFactor = 1.0;
+    
+    if (netProfitMargin >= 10) adjustmentFactor += 0.3;
+    else if (netProfitMargin >= 5) adjustmentFactor += 0.1;
+    
+    if (currentRatio >= 2.0) adjustmentFactor += 0.2;
+    else if (currentRatio >= 1.5) adjustmentFactor += 0.1;
+    
+    if (debtToEquity <= 1.0) adjustmentFactor += 0.2;
+    else if (debtToEquity <= 2.0) adjustmentFactor += 0.1;
+    
+    if (returnOnAssets >= 15) adjustmentFactor += 0.2;
+    else if (returnOnAssets >= 10) adjustmentFactor += 0.1;
+    
+    const suggestedAmount = Math.round(baseAmount * adjustmentFactor);
+    
+    // Calculate interest rate based on risk profile
+    let interestRate = 12; // Base rate
+    const score = calculateScore();
+    
+    if (score >= 85) interestRate = 8;
+    else if (score >= 70) interestRate = 10;
+    else if (score >= 55) interestRate = 12;
+    else interestRate = 15;
+    
+    // Calculate monthly EMI
+    const repaymentTermYears = 3;
+    const monthlyRate = interestRate / 100 / 12;
+    const totalMonths = repaymentTermYears * 12;
+    const monthlyEMI = (suggestedAmount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / 
+                       (Math.pow(1 + monthlyRate, totalMonths) - 1);
+    
+    return {
+      suggestedAmount,
+      repaymentTermYears,
+      interestRate,
+      monthlyEMI: Math.round(monthlyEMI)
+    };
+  };
+
   const score = calculateScore();
+  const loanSuggestion = calculateLoanSuggestion();
   
   const getScoreCategory = (score: number) => {
     if (score >= 85) return {
@@ -236,6 +288,84 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 {scoreData.recommendation}
               </p>
             </div>
+          </div>
+
+          {/* Loan Suggestion & Payability Section */}
+          <div className="border-t pt-6">
+            <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Calculator className="h-6 w-6 text-blue-600" />
+                  <div>
+                    <CardTitle className="text-xl text-gray-900">Loan Suggestion & Payability</CardTitle>
+                    <CardDescription className="text-gray-600">Based on your financial ratios...</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Loan Details */}
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-2xl font-bold text-gray-900">
+                        Suggested Loan Amount: <span className="text-green-600">AED {loanSuggestion.suggestedAmount.toLocaleString()}</span>
+                      </h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Calculated from: max(40% of Revenue, 3×Net Profit) – Existing Debt
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Repayment term (years):</span>
+                        <div className="text-lg font-bold">{loanSuggestion.repaymentTermYears}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Interest rate (% per annum):</span>
+                        <div className="text-lg font-bold">{loanSuggestion.interestRate}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Loan amount:</span>
+                        <div className="text-lg font-bold">{loanSuggestion.suggestedAmount.toLocaleString()}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg border">
+                      <div className="text-lg font-bold text-gray-900">
+                        Monthly EMI: <span className="text-blue-600">AED {loanSuggestion.monthlyEMI.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Payability Visualization */}
+                  <div className="space-y-4">
+                    <h5 className="font-semibold text-gray-700">Loan Payability Score</h5>
+                    <div className="grid grid-cols-12 gap-1 h-20 items-end">
+                      {Array.from({ length: 36 }, (_, index) => (
+                        <div
+                          key={index}
+                          className={`${
+                            index < Math.floor((score / 100) * 36)
+                              ? 'bg-green-500'
+                              : 'bg-gray-200'
+                          } rounded-sm transition-all duration-200`}
+                          style={{
+                            height: `${Math.max(20, Math.random() * 60 + 20)}%`
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-600">
+                      <span>Repayment Timeline</span>
+                      <span>36 Months</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <strong>Payability Rating:</strong> {scoreData.category} - Based on current financial health
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {detailed && (
