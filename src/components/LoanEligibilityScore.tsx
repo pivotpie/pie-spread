@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -18,7 +18,9 @@ import {
   Star,
   Calendar,
   TrendingUp as TrendUp,
-  Settings
+  Settings,
+  BarChart3,
+  PieChart
 } from 'lucide-react';
 import { EditableLoanForm } from './EditableLoanForm';
 
@@ -50,12 +52,9 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
   console.log('LoanEligibilityScore rendering with ratios:', ratios, 'year:', year);
   
   const [showLoanForm, setShowLoanForm] = useState(false);
-  const [loanParams, setLoanParams] = useState({
-    loanAmount: 0,
-    interestRate: 0,
-    repaymentTermYears: 0,
-    monthlyEMI: 0
-  });
+  const [loanAmount, setLoanAmount] = useState([0]);
+  const [interestRate, setInterestRate] = useState([0]);
+  const [repaymentTerm, setRepaymentTerm] = useState([0]);
 
   // Enhanced scoring algorithm that includes AECB data
   const calculateEnhancedScore = () => {
@@ -225,20 +224,26 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
     return `AED ${(amount / 1000000).toFixed(2)}M`;
   };
 
-  const generatePayabilityData = () => {
-    const periods = [
-      { period: `${year - 2}`, label: `Year ${year - 2}` },
-      { period: `${year - 1}`, label: `Year ${year - 1}` },
-      { period: `${year}`, label: `Year ${year}` },
-      { period: `${year + 1}`, label: `Projected ${year + 1}` },
-      { period: `${year + 2}`, label: `Projected ${year + 2}` }
-    ];
+  const formatCurrencyK = (amount: number) => {
+    if (amount >= 1000000) {
+      return `AED ${(amount / 1000000).toFixed(2)}M`;
+    }
+    return `AED ${(amount / 1000).toFixed(0)}K`;
+  };
 
-    return periods.map((period, index) => {
-      // Calculate financial health based on ratios and trends
+  const calculateEMI = (principal: number, rate: number, term: number) => {
+    const monthlyRate = rate / 100 / 12;
+    const months = term * 12;
+    if (monthlyRate === 0) return principal / months;
+    return (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+  };
+
+  const generateFinancialHealthData = () => {
+    const periods = Array.from({ length: 12 }, (_, i) => {
+      const period = `${year - 5 + i}`;
       let healthScore = 50; // Base score
       
-      // Adjust based on current ratios (for current and projected years)
+      // Adjust based on current ratios with some variation for historical data
       if (ratios.currentRatio.isReliable && ratios.currentRatio.value > 1) {
         healthScore += Math.min((ratios.currentRatio.value - 1) * 15, 20);
       }
@@ -251,46 +256,58 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
         healthScore -= Math.min(ratios.debtToEquity.value * 8, 20);
       }
 
-      // Add some variation for historical and projected periods
-      if (index < 2) { // Historical data
-        healthScore += Math.random() * 10 - 5; // ±5 variation
-      } else if (index > 2) { // Projected data
-        healthScore += (index - 2) * 3; // Slight improvement trend
-        healthScore += Math.random() * 8 - 4; // ±4 variation
+      // Add variation for different periods
+      if (i < 6) { // Historical data
+        healthScore += (Math.random() - 0.5) * 20; // ±10 variation
+      } else if (i === 5) { // Current year
+        // Keep close to calculated score
+        healthScore = score;
+      } else { // Future projections
+        healthScore += (i - 5) * 2; // Slight improvement trend
+        healthScore += (Math.random() - 0.5) * 10; // ±5 variation
       }
 
       // Ensure score is between 0 and 100
       healthScore = Math.max(0, Math.min(100, healthScore));
 
       return {
-        period: period.period,
-        label: period.label,
+        period,
         score: Math.round(healthScore),
-        isProjected: index > 2,
-        details: {
-          liquidity: ratios.currentRatio.isReliable ? ratios.currentRatio.value : 1.2 + (Math.random() * 0.6),
-          profitability: ratios.netProfitMargin.isReliable ? ratios.netProfitMargin.value : 5 + (Math.random() * 10),
-          leverage: ratios.debtToEquity.isReliable ? ratios.debtToEquity.value : 0.3 + (Math.random() * 0.4)
-        }
+        isCurrent: i === 5,
+        isProjected: i > 5
       };
     });
+
+    return periods;
   };
 
-  const payabilityData = generatePayabilityData();
+  const financialHealthData = generateFinancialHealthData();
   const recommendation = getRecommendation(score, hasAECB);
   const suggestedAmount = getLoanAmount(score);
   const suggestedRate = getLoanRate(score);
   const suggestedTerm = getLoanTerm(score);
 
+  // Initialize sliders with suggested values
+  React.useEffect(() => {
+    setLoanAmount([suggestedAmount]);
+    setInterestRate([suggestedRate]);
+    setRepaymentTerm([suggestedTerm]);
+  }, [suggestedAmount, suggestedRate, suggestedTerm]);
+
+  const currentLoanAmount = loanAmount[0] || suggestedAmount;
+  const currentInterestRate = interestRate[0] || suggestedRate;
+  const currentRepaymentTerm = repaymentTerm[0] || suggestedTerm;
+  const monthlyEMI = calculateEMI(currentLoanAmount, currentInterestRate, currentRepaymentTerm);
+
   console.log('Suggested loan details:', { suggestedAmount, suggestedRate, suggestedTerm });
-  console.log('Payability data generated:', payabilityData);
+  console.log('Current loan settings:', { currentLoanAmount, currentInterestRate, currentRepaymentTerm, monthlyEMI });
 
   const handleLoanParamsChange = (params: any) => {
-    setLoanParams(params);
+    // This function can be used for additional loan parameter changes if needed
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent mb-2">
           {hasAECB ? 'Enhanced' : 'Basic'} Loan Eligibility Assessment
@@ -300,140 +317,245 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Score Display */}
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl rounded-2xl overflow-hidden">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
-              <Star className="h-6 w-6 text-yellow-500" />
-              Eligibility Score
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className={`text-6xl font-bold mb-4 ${getScoreColor(score)}`}>
-              {score.toFixed(0)}
-            </div>
-            <div className="mb-4">
-              {getScoreBadge(score)}
-            </div>
-            <Progress value={score} className="mb-4" />
-            <div className="text-slate-600 text-sm">
-              Based on {hasAECB ? 'financial + credit bureau' : 'financial statements only'} analysis
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Suggested Loan Amount */}
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 shadow-xl rounded-2xl overflow-hidden">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
-              <DollarSign className="h-6 w-6 text-green-500" />
-              Suggested CAD Limit
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className="text-4xl font-bold text-green-600 mb-4">
-              {formatCurrency(suggestedAmount)}
-            </div>
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Interest Rate:</span>
-                <span className="font-semibold text-slate-900">{suggestedRate}% p.a.</span>
+      {/* Main Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* CAD Loan Eligibility Score */}
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
+                <Star className="h-6 w-6 text-yellow-500" />
+                CAD Loan Eligibility Score
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                Assessment for year {year}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <div className={`text-6xl font-bold mb-4 ${getScoreColor(score)}`}>
+                {score.toFixed(0)}
+                <span className="text-2xl text-slate-500">/100</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Repayment Term:</span>
-                <span className="font-semibold text-slate-900">{suggestedTerm} years</span>
-              </div>
-            </div>
-            {hasAECB && ratios.aecbScore && (
               <div className="mb-4">
-                <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
-                  <CreditCard className="h-4 w-4 mr-1" />
-                  AECB Score: {ratios.aecbScore}
-                </Badge>
+                {getScoreBadge(score)}
               </div>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowLoanForm(!showLoanForm)}
-              className="mt-2"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              {showLoanForm ? 'Hide' : 'Customize'} Parameters
-            </Button>
-          </CardContent>
-        </Card>
+              <Progress value={score} className="mb-4 h-3" />
+              <Alert className="mb-4">
+                <recommendation.icon />
+                <AlertDescription className="text-sm font-medium">
+                  {recommendation.message}
+                </AlertDescription>
+              </Alert>
+              <div className="text-slate-600 text-sm">
+                Highly recommended for CAD limit approval and competitive terms
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Recommendation */}
-        <Card className="bg-gradient-to-br from-slate-50 to-gray-50 border-2 border-slate-200 shadow-xl rounded-2xl overflow-hidden">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
-              {recommendation.icon}
-              Recommendation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Alert className="mb-4">
-              <AlertDescription className="text-base font-medium">
-                {recommendation.message}
-              </AlertDescription>
-            </Alert>
-            {hasAECB && ratios.riskGrade && (
-              <div className="mb-4">
-                <Badge variant="outline" className="text-lg px-4 py-2">
-                  Risk Grade: {ratios.riskGrade}
-                </Badge>
+          {/* Loan Parameters */}
+          <Card className="bg-white/90 backdrop-blur-sm border-2 border-blue-100 shadow-xl rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Settings className="h-5 w-5 text-blue-500" />
+                Loan Parameters
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium text-slate-700">Loan Amount (AED)</label>
+                  <span className="text-sm font-bold text-slate-900">{formatCurrencyK(currentLoanAmount)}</span>
+                </div>
+                <Slider
+                  value={loanAmount}
+                  onValueChange={setLoanAmount}
+                  max={5000000}
+                  min={100000}
+                  step={50000}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>AED 100K</span>
+                  <span>AED 5M</span>
+                </div>
               </div>
-            )}
-            <div className="text-slate-600 text-sm">
-              Assessment for year {year}
-            </div>
-          </CardContent>
-        </Card>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium text-slate-700">Interest Rate (% per annum)</label>
+                  <span className="text-sm font-bold text-slate-900">{currentInterestRate.toFixed(1)}%</span>
+                </div>
+                <Slider
+                  value={interestRate}
+                  onValueChange={setInterestRate}
+                  max={20}
+                  min={5}
+                  step={0.1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>5%</span>
+                  <span>20%</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium text-slate-700">Repayment Term (Years)</label>
+                  <span className="text-sm font-bold text-slate-900">{currentRepaymentTerm}</span>
+                </div>
+                <Slider
+                  value={repaymentTerm}
+                  onValueChange={setRepaymentTerm}
+                  max={10}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>1 Year</span>
+                  <span>10 Years</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">Calculated EMI</span>
+                  <span className="text-lg font-bold text-blue-600">{formatCurrencyK(monthlyEMI)}</span>
+                </div>
+                <div className="text-xs text-slate-500 mt-1">Monthly payment for {currentRepaymentTerm} years at {currentInterestRate.toFixed(1)}%</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Suggested Loan Amount */}
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
+                <DollarSign className="h-6 w-6 text-green-500" />
+                Suggested Loan Amount
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                Based on financial analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <div className="text-4xl font-bold text-green-600 mb-2">
+                {formatCurrency(suggestedAmount)}
+              </div>
+              <div className="text-lg text-slate-600 mb-4">Lending Rate</div>
+              <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Suggested Term:</span>
+                  <span className="font-semibold text-slate-900">{suggestedTerm} years</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Est. Monthly EMI:</span>
+                  <span className="font-semibold text-slate-900">{formatCurrencyK(calculateEMI(suggestedAmount, suggestedRate, suggestedTerm))}</span>
+                </div>
+              </div>
+              {hasAECB && ratios.aecbScore && (
+                <div className="mt-4">
+                  <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    AECB Score: {ratios.aecbScore}
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Loan Payability Analysis */}
+          <Card className="bg-white/90 backdrop-blur-sm border-2 border-green-100 shadow-xl rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-green-500" />
+                Loan Payability Analysis
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                Current loan configuration assessment
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-4">
+                <div className="text-3xl font-bold text-green-600 mb-1">
+                  {formatCurrencyK(monthlyEMI)}
+                </div>
+                <div className="text-sm text-slate-600">Monthly Amount</div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-lg font-bold text-blue-600">{formatCurrencyK(currentLoanAmount)}</div>
+                  <div className="text-xs text-slate-600">Loan Amount</div>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="text-lg font-bold text-green-600">{currentInterestRate.toFixed(1)}%</div>
+                  <div className="text-xs text-slate-600">Interest Rate</div>
+                </div>
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <div className="text-lg font-bold text-purple-600">{currentRepaymentTerm} yrs</div>
+                  <div className="text-xs text-slate-600">Term</div>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Total Interest:</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatCurrencyK((monthlyEMI * currentRepaymentTerm * 12) - currentLoanAmount)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Total Payable:</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatCurrencyK(monthlyEMI * currentRepaymentTerm * 12)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Editable Loan Form */}
-      {showLoanForm && (
-        <div className="mt-8">
-          <EditableLoanForm
-            suggestedAmount={suggestedAmount}
-            suggestedRate={suggestedRate}
-            suggestedTerm={suggestedTerm}
-            onLoanParamsChange={handleLoanParamsChange}
-          />
-        </div>
-      )}
-
-      {/* Payability Score Timeline */}
-      <Card className="mt-8 bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
+      {/* Financial Health Timeline */}
+      <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
         <CardHeader>
           <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-blue-500" />
-            Payability Score Timeline
+            <BarChart3 className="h-6 w-6 text-blue-500" />
+            Financial Health Timeline
           </CardTitle>
-          <CardDescription>Historical performance and projected payability capacity</CardDescription>
+          <CardDescription>Historical performance and projected financial strength</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-5 gap-4 mb-6">
-            {payabilityData.map((data, index) => (
+          <div className="grid grid-cols-12 gap-2 mb-6">
+            {financialHealthData.map((data, index) => (
               <div key={data.period} className="text-center">
                 <div className="mb-2">
-                  <div className="text-sm font-medium text-slate-700 mb-1">{data.label}</div>
-                  <div className={`text-xs px-2 py-1 rounded-full ${data.isProjected ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {data.isProjected ? 'Projected' : 'Historical'}
+                  <div className="text-xs font-medium text-slate-700 mb-1">{data.period}</div>
+                  <div className={`text-xs px-1 py-0.5 rounded ${
+                    data.isCurrent ? 'bg-blue-200 text-blue-800' :
+                    data.isProjected ? 'bg-green-100 text-green-700' : 
+                    'bg-slate-100 text-slate-600'
+                  }`}>
+                    {data.isCurrent ? 'Current' : data.isProjected ? 'Proj.' : 'Hist.'}
                   </div>
                 </div>
                 
-                {/* Payability Bar */}
-                <div className="relative h-32 bg-slate-100 rounded-lg overflow-hidden mb-2">
+                {/* Health Bar */}
+                <div className="relative h-24 bg-slate-100 rounded overflow-hidden mb-1">
                   <div 
-                    className={`absolute bottom-0 w-full transition-all duration-500 rounded-lg ${
+                    className={`absolute bottom-0 w-full transition-all duration-500 ${
                       data.score >= 80 ? 'bg-gradient-to-t from-green-500 to-green-400' :
                       data.score >= 60 ? 'bg-gradient-to-t from-blue-500 to-blue-400' :
                       data.score >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-400' :
                       'bg-gradient-to-t from-red-500 to-red-400'
-                    }`}
+                    } ${data.isCurrent ? 'ring-2 ring-blue-400' : ''}`}
                     style={{ height: `${data.score}%` }}
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -442,50 +564,50 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
                     </span>
                   </div>
                 </div>
-
-                {/* Score Details */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Liquidity:</span>
-                    <span className="font-medium">{data.details.liquidity.toFixed(1)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Profit %:</span>
-                    <span className="font-medium">{data.details.profitability.toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">D/E:</span>
-                    <span className="font-medium">{data.details.leverage.toFixed(2)}</span>
-                  </div>
-                </div>
               </div>
             ))}
           </div>
 
-          {/* Legend */}
-          <div className="flex justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gradient-to-r from-green-500 to-green-400 rounded"></div>
-              <span>Excellent (80-100)</span>
+          {/* Legend and Analysis Summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Score Legend</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-green-500 to-green-400 rounded"></div>
+                  <span>Excellent (80-100)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-400 rounded"></div>
+                  <span>Good (60-79)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded"></div>
+                  <span>Fair (40-59)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-red-400 rounded"></div>
+                  <span>Poor (0-39)</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-blue-400 rounded"></div>
-              <span>Good (60-79)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded"></div>
-              <span>Fair (40-59)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gradient-to-r from-red-500 to-red-400 rounded"></div>
-              <span>Poor (0-39)</span>
+            
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Analysis Summary</h4>
+              <ul className="text-sm space-y-1 text-slate-600">
+                <li>• Consistent financial health performance across periods</li>
+                <li>• Strong liquidity position supports loan repayment capacity</li>
+                <li>• Stable profitability indicates sustainable business operations</li>
+                <li>• Positive trajectory suggests improving creditworthiness</li>
+                <li>• Current assessment supports competitive loan pricing</li>
+              </ul>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Detailed Scoring Factors */}
-      <Card className="mt-8 bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
+      <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
         <CardHeader>
           <CardTitle className="text-xl font-bold text-slate-900">Scoring Breakdown</CardTitle>
           <CardDescription>Detailed analysis of factors contributing to the eligibility score</CardDescription>
