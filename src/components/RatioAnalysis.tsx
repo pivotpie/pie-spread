@@ -331,9 +331,6 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
                       {ratioItem.analysis.icon}
                     </div>
                     <CardDescription className="text-xs text-slate-500 pt-1">{ratioItem.description}</CardDescription>
-                    <div className="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-1 rounded mt-2">
-                      <strong>Formula:</strong> {ratioItem.formula}
-                    </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -348,6 +345,9 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
                     </div>
                     <div className="text-xs text-gray-600">
                       <strong>Benchmark:</strong> {ratioItem.benchmark}
+                    </div>
+                    <div className="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-1 rounded">
+                      <strong>Formula:</strong> {ratioItem.formula}
                     </div>
                     
                     {/* Contextual Explanation */}
