@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -56,9 +55,9 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
     
     // Leverage (20 points)
     // Debt to Equity (10 points)
-    if (ratios.debtToEquity <= 1.0) score += 10;
-    else if (ratios.debtToEquity <= 2.0) score += 7;
-    else if (ratios.debtToEquity <= 3.0) score += 3;
+    if (ratios.debtToEquity > 0 && ratios.debtToEquity <= 1.0) score += 10;
+    else if (ratios.debtToEquity > 0 && ratios.debtToEquity <= 2.0) score += 7;
+    else if (ratios.debtToEquity > 0 && ratios.debtToEquity <= 3.0) score += 3;
     
     // Capital Adequacy (10 points)
     if (ratios.capitalAdequacy >= 50) score += 10;
@@ -166,11 +165,11 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
       name: 'Leverage',
       weight: 20,
       score: Math.min(20,
-        (ratios.debtToEquity <= 1.0 ? 10 : ratios.debtToEquity <= 2.0 ? 7 : ratios.debtToEquity <= 3.0 ? 3 : 0) +
+        (ratios.debtToEquity > 0 && ratios.debtToEquity <= 1.0 ? 10 : ratios.debtToEquity > 0 && ratios.debtToEquity <= 2.0 ? 7 : ratios.debtToEquity > 0 && ratios.debtToEquity <= 3.0 ? 3 : 0) +
         (ratios.capitalAdequacy >= 50 ? 10 : ratios.capitalAdequacy >= 30 ? 6 : ratios.capitalAdequacy >= 20 ? 3 : 0)
       ),
       metrics: `D/E: ${ratios.debtToEquity.toFixed(2)}, Capital Adequacy: ${ratios.capitalAdequacy.toFixed(1)}%`,
-      status: (ratios.debtToEquity <= 2.0 && ratios.capitalAdequacy >= 30) ? 'pass' : 'fail'
+      status: (ratios.debtToEquity > 0 && ratios.debtToEquity <= 2.0 && ratios.capitalAdequacy >= 30) ? 'pass' : 'fail'
     },
     {
       name: 'Profitability',

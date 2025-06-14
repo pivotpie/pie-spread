@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -31,6 +30,7 @@ interface RatioAnalysisProps {
 export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) => {
   const getRatioStatus = (value: number, good: number, acceptable: number, reverse: boolean = false) => {
     if (reverse) {
+      if (value < 0) return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
       if (value <= good) return { status: 'good', icon: <CheckCircle className="h-4 w-4 text-green-500" /> };
       if (value <= acceptable) return { status: 'acceptable', icon: <AlertTriangle className="h-4 w-4 text-yellow-500" /> };
       return { status: 'poor', icon: <XCircle className="h-4 w-4 text-red-500" /> };
