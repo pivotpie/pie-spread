@@ -89,13 +89,20 @@ const Index = () => {
     if (!data) {
       return {
         currentRatio: 0,
+        quickRatio: 0,
         debtToEquity: 0,
+        grossProfitMargin: 0,
+        netProfitMargin: 0,
+        operatingMargin: 0,
+        ebitdaMargin: 0,
         returnOnAssets: 0,
         returnOnEquity: 0,
-        profitMargin: 0,
-        debtServiceCoverage: 0,
-        debtToAssets: 0,
-        equityRatio: 0
+        assetTurnover: 0,
+        inventoryTurnover: 0,
+        interestCoverage: 0,
+        debtRatio: 0,
+        cashRatio: 0,
+        capitalAdequacy: 0
       };
     }
 
@@ -106,21 +113,37 @@ const Index = () => {
     const shareholderEquity = getValueByFieldAndYear("Balance Sheet", "Shareholder's Equity", year);
     const totalRevenue = getValueByFieldAndYear("Income Statement", "Total Revenue", year);
     const netProfit = getValueByFieldAndYear("Income Statement", "Net Profit", year);
+    const grossProfit = getValueByFieldAndYear("Income Statement", "Gross Profit", year);
+    const ebit = getValueByFieldAndYear("Income Statement", "EBIT", year);
     const ebitda = getValueByFieldAndYear("Income Statement", "EBITDA", year);
     const interestExpense = getValueByFieldAndYear("Income Statement", "Interest Expense", year);
-    const longTermDebt = getValueByFieldAndYear("Balance Sheet", "Long-Term Debt", year);
-    const shortTermDebt = getValueByFieldAndYear("Balance Sheet", "Short-Term Debt", year);
-    const totalDebt = longTermDebt + shortTermDebt;
+    const cogs = getValueByFieldAndYear("Income Statement", "Cost of Goods Sold (COGS)", year);
+    const inventory = getValueByFieldAndYear("Balance Sheet", "Inventory", year);
+    const cashAndEquivalents = getValueByFieldAndYear("Balance Sheet", "Cash and Cash Equivalents", year);
 
     return {
+      // Liquidity Ratios
       currentRatio: currentLiabilities !== 0 ? currentAssets / currentLiabilities : 0,
+      quickRatio: currentLiabilities !== 0 ? (currentAssets - inventory) / currentLiabilities : 0,
+      cashRatio: currentLiabilities !== 0 ? cashAndEquivalents / currentLiabilities : 0,
+      
+      // Leverage Ratios
       debtToEquity: shareholderEquity !== 0 ? totalLiabilities / shareholderEquity : 0,
+      debtRatio: totalAssets !== 0 ? (totalLiabilities / totalAssets) * 100 : 0,
+      capitalAdequacy: totalAssets !== 0 ? (shareholderEquity / totalAssets) * 100 : 0,
+      
+      // Profitability Ratios
+      grossProfitMargin: totalRevenue !== 0 ? (grossProfit / totalRevenue) * 100 : 0,
+      netProfitMargin: totalRevenue !== 0 ? (netProfit / totalRevenue) * 100 : 0,
+      operatingMargin: totalRevenue !== 0 ? (ebit / totalRevenue) * 100 : 0,
+      ebitdaMargin: totalRevenue !== 0 ? (ebitda / totalRevenue) * 100 : 0,
       returnOnAssets: totalAssets !== 0 ? (netProfit / totalAssets) * 100 : 0,
       returnOnEquity: shareholderEquity !== 0 ? (netProfit / shareholderEquity) * 100 : 0,
-      profitMargin: totalRevenue !== 0 ? (netProfit / totalRevenue) * 100 : 0,
-      debtServiceCoverage: interestExpense !== 0 ? ebitda / interestExpense : 0,
-      debtToAssets: totalAssets !== 0 ? (totalDebt / totalAssets) * 100 : 0,
-      equityRatio: totalAssets !== 0 ? (shareholderEquity / totalAssets) * 100 : 0
+      
+      // Efficiency Ratios
+      assetTurnover: totalAssets !== 0 ? totalRevenue / totalAssets : 0,
+      inventoryTurnover: inventory !== 0 ? cogs / inventory : 0,
+      interestCoverage: interestExpense !== 0 ? ebit / interestExpense : 0
     };
   };
 
