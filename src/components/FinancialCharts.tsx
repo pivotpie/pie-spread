@@ -37,27 +37,31 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
   const assetsLiabilitiesData = [
     {
       name: 'Current Assets',
-      value: getValueByFieldAndYear("Balance Sheet", "Current Assets", selectedYear) / 1000000
+      'Current Assets': getValueByFieldAndYear("Balance Sheet", "Current Assets", selectedYear) / 1000000,
+      fill: '#8884d8'
     },
     {
       name: 'Non-Current Assets',
-      value: getValueByFieldAndYear("Balance Sheet", "Non-Current Assets", selectedYear) / 1000000
+      'Non-Current Assets': getValueByFieldAndYear("Balance Sheet", "Non-Current Assets", selectedYear) / 1000000,
+      fill: '#82ca9d'
     },
     {
       name: 'Current Liabilities',
-      value: getValueByFieldAndYear("Balance Sheet", "Current Liabilities", selectedYear) / 1000000
+      'Current Liabilities': getValueByFieldAndYear("Balance Sheet", "Current Liabilities", selectedYear) / 1000000,
+      fill: '#ffc658'
     },
     {
       name: 'Non-Current Liabilities',
-      value: getValueByFieldAndYear("Balance Sheet", "Non-Current Liabilities", selectedYear) / 1000000
+      'Non-Current Liabilities': getValueByFieldAndYear("Balance Sheet", "Non-Current Liabilities", selectedYear) / 1000000,
+      fill: '#ff7300'
     }
   ];
 
   // Revenue Trend
   const revenueTrendData = years.map(year => ({
     year,
-    revenue: getValueByFieldAndYear("Income Statement", "Total Revenue", selectedYear) / 1000000,
-    profit: getValueByFieldAndYear("Income Statement", "Net Profit", selectedYear) / 1000000
+    Revenue: getValueByFieldAndYear("Income Statement", "Total Revenue", selectedYear) / 1000000,
+    'Net Profit': getValueByFieldAndYear("Income Statement", "Net Profit", selectedYear) / 1000000
   }));
 
   // Cash Flow Breakdown
@@ -95,53 +99,29 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
   ];
 
   const chartConfig = {
-    value: {
-      label: "Value (AED M)",
-      color: "#8884d8"
-    },
-    currentAssets: {
+    'Current Assets': {
       label: "Current Assets",
       color: "#8884d8"
     },
-    nonCurrentAssets: {
+    'Non-Current Assets': {
       label: "Non-Current Assets",
       color: "#82ca9d"
     },
-    currentLiabilities: {
+    'Current Liabilities': {
       label: "Current Liabilities",
       color: "#ffc658"
     },
-    nonCurrentLiabilities: {
+    'Non-Current Liabilities': {
       label: "Non-Current Liabilities",
       color: "#ff7300"
     },
-    revenue: {
+    Revenue: {
       label: "Revenue",
       color: "#8884d8"
     },
-    profit: {
+    'Net Profit': {
       label: "Net Profit",
       color: "#82ca9d"
-    },
-    operating: {
-      label: "Operating",
-      color: "#22c55e"
-    },
-    investing: {
-      label: "Investing",
-      color: "#ef4444"
-    },
-    financing: {
-      label: "Financing",
-      color: "#3b82f6"
-    },
-    equity: {
-      label: "Shareholder's Equity",
-      color: "#10b981"
-    },
-    debt: {
-      label: "Total Debt",
-      color: "#f59e0b"
     }
   };
 
@@ -165,9 +145,12 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 <YAxis tick={{ fontSize: 10 }} />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
+                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
                 />
-                <Bar dataKey="value" fill="#8884d8" />
+                <Bar dataKey="Current Assets" fill="#8884d8" />
+                <Bar dataKey="Non-Current Assets" fill="#82ca9d" />
+                <Bar dataKey="Current Liabilities" fill="#ffc658" />
+                <Bar dataKey="Non-Current Liabilities" fill="#ff7300" />
                 <ChartLegend content={<ChartLegendContent />} />
               </BarChart>
             </ResponsiveContainer>
@@ -193,10 +176,10 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                 <YAxis tick={{ fontSize: 10 }} />
                 <ChartTooltip 
                   content={<ChartTooltipContent />}
-                  formatter={(value: number) => [`AED ${value.toFixed(1)}M`, '']}
+                  formatter={(value: number, name: string) => [`AED ${value.toFixed(1)}M`, name]}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} name="Revenue" />
-                <Line type="monotone" dataKey="profit" stroke="#82ca9d" strokeWidth={2} name="Net Profit" />
+                <Line type="monotone" dataKey="Revenue" stroke="#8884d8" strokeWidth={2} />
+                <Line type="monotone" dataKey="Net Profit" stroke="#82ca9d" strokeWidth={2} />
                 <ChartLegend content={<ChartLegendContent />} />
               </LineChart>
             </ResponsiveContainer>
@@ -224,6 +207,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   innerRadius={40}
                   outerRadius={80}
                   dataKey="value"
+                  nameKey="name"
                 >
                   {cashFlowData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -260,6 +244,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
                   innerRadius={40}
                   outerRadius={80}
                   dataKey="value"
+                  nameKey="name"
                 >
                   {equityDebtData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
