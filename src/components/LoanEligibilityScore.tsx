@@ -20,7 +20,8 @@ import {
   TrendingUp as TrendUp,
   Settings,
   BarChart3,
-  PieChart
+  PieChart,
+  Info
 } from 'lucide-react';
 import { EditableLoanForm } from './EditableLoanForm';
 
@@ -46,9 +47,19 @@ interface EnhancedRatios {
 interface LoanEligibilityScoreProps {
   ratios: EnhancedRatios;
   year: number;
+  // Add financial data for loan calculation
+  totalRevenue?: number;
+  netProfit?: number;
+  existingDebts?: number;
 }
 
-export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ ratios, year }) => {
+export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ 
+  ratios, 
+  year, 
+  totalRevenue = 10000000, // Default 10M AED
+  netProfit = 1000000,     // Default 1M AED
+  existingDebts = 2000000  // Default 2M AED
+}) => {
   console.log('LoanEligibilityScore rendering with ratios:', ratios, 'year:', year);
   
   const [showLoanForm, setShowLoanForm] = useState(false);
@@ -150,6 +161,26 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
   const { score, factors, hasAECB } = calculateEnhancedScore();
   console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
+  // Updated loan amount calculation using the new formula
+  const getLoanAmount = (score: number) => {
+    // Formula: (40% of Revenue + 3x Net Profit) - Existing Debts
+    const revenueComponent = totalRevenue * 0.4;
+    const profitComponent = netProfit * 3;
+    const calculatedAmount = revenueComponent + profitComponent - existingDebts;
+    
+    // Apply score-based adjustment (between 50% and 150% of calculated amount)
+    const scoreMultiplier = 0.5 + (score / 100);
+    const finalAmount = Math.max(calculatedAmount * scoreMultiplier, 100000); // Minimum 100K AED
+    
+    return {
+      amount: Math.round(finalAmount),
+      revenueComponent,
+      profitComponent,
+      calculatedAmount,
+      scoreMultiplier
+    };
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-blue-600';
@@ -199,12 +230,6 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
       icon: <XCircle className="h-5 w-5 text-red-500" />,
       type: "error" as const
     };
-  };
-
-  const getLoanAmount = (score: number) => {
-    const baseAmount = 1000000; // 1M AED base
-    const multiplier = Math.max(score / 100 * 3, 0.5); // 0.5x to 3x based on score
-    return Math.round(baseAmount * multiplier);
   };
 
   const getLoanRate = (score: number) => {
@@ -283,23 +308,23 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
 
   const financialHealthData = generateFinancialHealthData();
   const recommendation = getRecommendation(score, hasAECB);
-  const suggestedAmount = getLoanAmount(score);
+  const loanCalculation = getLoanAmount(score);
   const suggestedRate = getLoanRate(score);
   const suggestedTerm = getLoanTerm(score);
 
   // Initialize sliders with suggested values
   React.useEffect(() => {
-    setLoanAmount([suggestedAmount]);
+    setLoanAmount([loanCalculation.amount]);
     setInterestRate([suggestedRate]);
     setRepaymentTerm([suggestedTerm]);
-  }, [suggestedAmount, suggestedRate, suggestedTerm]);
+  }, [loanCalculation.amount, suggestedRate, suggestedTerm]);
 
-  const currentLoanAmount = loanAmount[0] || suggestedAmount;
+  const currentLoanAmount = loanAmount[0] || loanCalculation.amount;
   const currentInterestRate = interestRate[0] || suggestedRate;
   const currentRepaymentTerm = repaymentTerm[0] || suggestedTerm;
   const monthlyEMI = calculateEMI(currentLoanAmount, currentInterestRate, currentRepaymentTerm);
 
-  console.log('Suggested loan details:', { suggestedAmount, suggestedRate, suggestedTerm });
+  console.log('Loan calculation details:', loanCalculation);
   console.log('Current loan settings:', { currentLoanAmount, currentInterestRate, currentRepaymentTerm, monthlyEMI });
 
   const handleLoanParamsChange = (params: any) => {
@@ -432,6 +457,57 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
 
         {/* Right Column */}
         <div className="space-y-6">
+          {/* Loan Calculation Formula */}
+          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
+                <Calculator className="h-6 w-6 text-purple-500" />
+                Loan Calculation Formula
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                How we calculate your eligible loan amount
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-white/70 p-4 rounded-lg border border-purple-200 mb-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-800 mb-2">Formula</div>
+                  <div className="text-sm font-mono bg-purple-100 p-2 rounded border">
+                    (40% × Revenue + 3 × Net Profit) - Existing Debts
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                  <span className="text-slate-700">40% of Revenue:</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.revenueComponent)}</span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                  <span className="text-slate-700">3 × Net Profit:</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.profitComponent)}</span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                  <span className="text-slate-700">Less: Existing Debts:</span>
+                  <span className="font-semibold text-red-600">-{formatCurrency(existingDebts)}</span>
+                </div>
+                <div className="border-t border-purple-200 pt-2">
+                  <div className="flex justify-between items-center p-2 bg-purple-100 rounded">
+                    <span className="text-slate-700 font-medium">Base Calculation:</span>
+                    <span className="font-bold text-purple-800">{formatCurrency(loanCalculation.calculatedAmount)}</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-slate-600 mb-1">Score Adjustment: {(loanCalculation.scoreMultiplier * 100).toFixed(0)}%</div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Info className="h-4 w-4 text-blue-500" />
+                    <span className="text-xs text-slate-600">Final amount adjusted based on credit score</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Suggested Loan Amount */}
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl rounded-2xl overflow-hidden">
             <CardHeader className="text-center pb-4">
@@ -445,7 +521,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
             </CardHeader>
             <CardContent className="text-center">
               <div className="text-4xl font-bold text-green-600 mb-2">
-                {formatCurrency(suggestedAmount)}
+                {formatCurrency(loanCalculation.amount)}
               </div>
               <div className="text-lg text-slate-600 mb-4">Lending Rate</div>
               <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
@@ -456,7 +532,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ rati
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Est. Monthly EMI:</span>
-                  <span className="font-semibold text-slate-900">{formatCurrencyK(calculateEMI(suggestedAmount, suggestedRate, suggestedTerm))}</span>
+                  <span className="font-semibold text-slate-900">{formatCurrencyK(calculateEMI(loanCalculation.amount, suggestedRate, suggestedTerm))}</span>
                 </div>
               </div>
               {hasAECB && ratios.aecbScore && (
