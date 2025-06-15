@@ -486,47 +486,6 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                   </div>
                 )}
               </div>
-
-              {/* Integrated Formula Section */}
-              <div className="bg-white/70 p-4 rounded-lg border border-blue-200">
-                <div className="text-center mb-4">
-                  <div className="text-sm font-bold text-blue-800 mb-2 flex items-center justify-center gap-2">
-                    <Calculator className="h-4 w-4" />
-                    Calculation Formula
-                  </div>
-                  <div className="text-xs font-mono bg-blue-100 p-2 rounded border">
-                    (40% × Revenue + 3 × Net Profit) - Existing Debts
-                  </div>
-                </div>
-                
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                    <span className="text-slate-700">40% of Revenue:</span>
-                    <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.revenueComponent)}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                    <span className="text-slate-700">3 × Net Profit:</span>
-                    <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.profitComponent)}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                    <span className="text-slate-700">Less: Existing Debts:</span>
-                    <span className="font-semibold text-red-600">-{formatCurrency(existingDebts)}</span>
-                  </div>
-                  <div className="border-t border-blue-200 pt-2">
-                    <div className="flex justify-between items-center p-2 bg-blue-100 rounded">
-                      <span className="text-slate-700 font-medium">Base Calculation:</span>
-                      <span className="font-bold text-blue-800">{formatCurrency(loanCalculation.calculatedAmount)}</span>
-                    </div>
-                  </div>
-                  <div className="text-center pt-2">
-                    <div className="text-xs text-slate-600 mb-1">Score Adjustment: {(loanCalculation.scoreMultiplier * 100).toFixed(0)}%</div>
-                    <div className="flex items-center justify-center gap-1">
-                      <Info className="h-3 w-3 text-blue-500" />
-                      <span className="text-xs text-slate-600">Final amount adjusted based on credit score</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
