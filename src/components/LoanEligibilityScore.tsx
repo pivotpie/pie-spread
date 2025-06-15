@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -34,6 +35,7 @@ interface EnhancedRatios {
   netProfitMargin: { value: number; isReliable: boolean };
   returnOnAssets: { value: number; isReliable: boolean };
   returnOnEquity: { value: number; isReliable: boolean };
+  interestCoverage: { value: number; isReliable: boolean };
   aecbScore?: number;
   riskGrade?: string;
   paymentPerformance?: number;
