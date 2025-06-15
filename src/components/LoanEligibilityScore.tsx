@@ -163,49 +163,21 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const { score, factors, hasAECB } = calculateEnhancedScore();
   console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
-  // Improved loan amount calculation using Debt Service Coverage Ratio (DSCR)
+  // Loan amount calculation using the specified formula: (40% of revenue + 3x net profit) - existing debts
   const getLoanAmount = (score: number) => {
-    // Calculate available cash flow for debt service
-    // Assume 70% of net profit is available for debt service (conservative approach)
-    const availableCashFlow = netProfit * 0.7;
+    // Apply the user's formula: (40% of revenue + 3x net profit) - existing debts
+    const revenueComponent = totalRevenue * 0.4; // 40% of revenue
+    const profitComponent = netProfit * 3; // 3x net profit
+    const calculatedAmount = revenueComponent + profitComponent - existingDebts;
     
-    // Required DSCR based on score (higher score = lower DSCR requirement)
-    // Score 80+: 1.2x, Score 60-79: 1.4x, Score 40-59: 1.6x, Below 40: 1.8x
-    let requiredDSCR = 1.8;
-    if (score >= 80) requiredDSCR = 1.2;
-    else if (score >= 60) requiredDSCR = 1.4;
-    else if (score >= 40) requiredDSCR = 1.6;
-    
-    // Maximum annual debt service based on DSCR
-    const maxAnnualDebtService = availableCashFlow / requiredDSCR;
-    
-    // Calculate loan amount based on typical 5-year term and average interest rate
-    const assumedRate = 0.12; // 12% average rate for calculation
-    const assumedTerm = 5; // 5 years
-    
-    // Calculate present value of annuity (loan amount)
-    const monthlyRate = assumedRate / 12;
-    const totalMonths = assumedTerm * 12;
-    const maxMonthlyPayment = maxAnnualDebtService / 12;
-    
-    const calculatedAmount = maxMonthlyPayment * 
-      ((1 - Math.pow(1 + monthlyRate, -totalMonths)) / monthlyRate);
-    
-    // Apply revenue-based cap (max 30% of annual revenue)
-    const revenueCap = totalRevenue * 0.3;
-    
-    // Final amount is the lower of calculated amount and revenue cap
-    const finalAmount = Math.min(calculatedAmount, revenueCap);
-    
-    // Minimum loan amount of 100K AED
-    const recommendedAmount = Math.max(finalAmount, 100000);
+    // Ensure minimum loan amount of 100K AED
+    const recommendedAmount = Math.max(calculatedAmount, 100000);
     
     return {
       amount: Math.round(recommendedAmount),
-      availableCashFlow,
-      requiredDSCR,
-      maxAnnualDebtService,
-      revenueCap,
+      revenueComponent,
+      profitComponent,
+      existingDebts,
       calculatedAmount: Math.round(calculatedAmount)
     };
   };
@@ -486,7 +458,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 Suggested Loan Amount
               </CardTitle>
               <CardDescription className="text-slate-600">
-                Based on Debt Service Coverage Ratio (DSCR) analysis
+                Based on formula: (40% of revenue + 3x net profit) - existing debts
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -498,16 +470,20 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
                 <div className="space-y-2 text-sm bg-slate-50 p-4 rounded-lg">
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Available Cash Flow:</span>
-                    <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.availableCashFlow)}</span>
+                    <span className="text-slate-600">40% of Revenue:</span>
+                    <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.revenueComponent)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Required DSCR:</span>
-                    <span className="font-semibold text-slate-900">{loanCalculation.requiredDSCR}x</span>
+                    <span className="text-slate-600">3x Net Profit:</span>
+                    <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.profitComponent)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Revenue Cap (30%):</span>
-                    <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.revenueCap)}</span>
+                    <span className="text-slate-600">Less: Existing Debts:</span>
+                    <span className="font-semibold text-red-600">-{formatCurrencyK(loanCalculation.existingDebts)}</span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between">
+                    <span className="text-slate-600">Calculated Amount:</span>
+                    <span className="font-bold text-slate-900">{formatCurrencyK(loanCalculation.calculatedAmount)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Suggested Term:</span>
