@@ -215,7 +215,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const { score, factors, hasAECB, totalActualScore, totalMaxScore } = calculateEnhancedScore();
   console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
-  // Loan amount calculation using the new Max formula
+  // Loan amount calculation using the new Max formula - no rounding of intermediate values
   const getLoanAmount = (score: number) => {
     // Apply the user's updated formula: Max(40% of revenue, 3x net profit) - existing debts
     const revenueComponent = totalRevenue * 0.4; // 40% of revenue
@@ -227,12 +227,12 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
     const recommendedAmount = Math.max(calculatedAmount, 100000);
     
     return {
-      amount: Math.round(recommendedAmount),
+      amount: recommendedAmount, // Remove rounding
       revenueComponent,
       profitComponent,
       maxComponent,
       existingDebts,
-      calculatedAmount: Math.round(calculatedAmount)
+      calculatedAmount // Remove rounding
     };
   };
 
@@ -526,11 +526,9 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
             </CardHeader>
             <CardContent>
               <div className="text-center mb-6">
-                <div className="text-4xl font-bold text-green-600 mb-2">
-                  {formatCurrency(loanCalculation.amount)}
+                <div className="text-4xl font-bold text-green-600 mb-4">
+                  {formatCurrency(loanCalculation.amount)} @ {suggestedRate}%
                 </div>
-                <div className="text-lg text-slate-600 mb-2">Lending Rate</div>
-                <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
                 <div className="space-y-2 text-sm bg-slate-50 p-4 rounded-lg">
                   <div className="flex justify-between">
                     <span className="text-slate-600">40% of Revenue:</span>
