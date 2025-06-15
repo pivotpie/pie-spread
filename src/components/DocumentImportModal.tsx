@@ -17,7 +17,8 @@ import {
   Scan,
   Loader2,
   Wifi,
-  WifiOff
+  WifiOff,
+  Building
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { dataLoaderService } from '@/services/dataLoaderService';

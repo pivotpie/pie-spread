@@ -1,4 +1,3 @@
-
 import { DATA_SOURCES, DataSourceConfig } from '@/config/dataSources';
 import { ocrVisionService } from './ocrVisionService';
 import { externalApiService } from './externalApiService';
@@ -93,7 +92,8 @@ class DataLoaderService {
       success: true,
       financial_data: results[0]?.default,
       aecb_data: results[1]?.default,
-      confidence_score: 1.0
+      confidence_score: 1.0,
+      source_info: { id: source.id, name: source.name, type: source.type }
     };
   }
 
@@ -103,8 +103,11 @@ class DataLoaderService {
       throw new Error('No files provided for OCR/Vision processing');
     }
 
+    // Ensure we only pass valid types to the OCR service
+    const validType = (source.type === 'ocr' || source.type === 'vision') ? source.type : 'ocr';
+    
     const result = await ocrVisionService.processDocuments(files, {
-      type: source.type,
+      type: validType,
       confidence_threshold: source.confidence_threshold || 0.85
     });
 
@@ -113,7 +116,8 @@ class DataLoaderService {
       financial_data: result.financial_data,
       aecb_data: result.aecb_data,
       error_message: result.error_message,
-      confidence_score: result.confidence_score
+      confidence_score: result.confidence_score,
+      source_info: { id: source.id, name: source.name, type: source.type }
     };
   }
 
@@ -132,7 +136,8 @@ class DataLoaderService {
       financial_data: result.financial_data,
       aecb_data: result.aecb_data,
       error_message: result.error_message,
-      confidence_score: result.confidence_score
+      confidence_score: result.confidence_score,
+      source_info: { id: source.id, name: source.name, type: source.type }
     };
   }
 
