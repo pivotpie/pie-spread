@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, BarChart3, Calculator } from 'lucide-react';
 
 interface FinancialItem {
   field_name: string;
@@ -23,14 +22,19 @@ interface FinancialChartsProps {
   data: FinancialData;
   selectedYear: number;
   years: number[];
+  currentRatios: any; // Add ratios prop for the cards
 }
 
-export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selectedYear, years }) => {
+export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selectedYear, years, currentRatios }) => {
   const getValueByFieldAndYear = (statement: keyof FinancialData, fieldName: string, year: number) => {
     const item = data[statement].find(item => 
       item.field_name === fieldName && item.year === year
     );
     return item?.value || 0;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `AED ${(amount / 1000000).toFixed(2)}M`;
   };
 
   // Assets vs Liabilities Comparison
@@ -150,6 +154,77 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ data, selected
       <div className="text-center">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent">Financial Analytics Dashboard</h2>
         <p className="text-slate-600 mt-2 text-lg">Visual representation of key financial metrics for {selectedYear}</p>
+      </div>
+
+      {/* Key Metrics Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardTitle className="text-sm font-semibold">Total Assets</CardTitle>
+            <div className="p-2 bg-white/20 rounded-lg">
+              <DollarSign className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-slate-900">
+              {formatCurrency(getValueByFieldAndYear("Balance Sheet", "Total Assets", selectedYear))}
+            </div>
+            <p className="text-sm text-slate-600 mt-2">
+              Company's total asset base
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
+            <CardTitle className="text-sm font-semibold">Net Profit</CardTitle>
+            <div className="p-2 bg-white/20 rounded-lg">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-slate-900">
+              {formatCurrency(getValueByFieldAndYear("Income Statement", "Net Profit", selectedYear))}
+            </div>
+            <p className="text-sm text-slate-600 mt-2">
+              Annual profitability
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <CardTitle className="text-sm font-semibold">Current Ratio</CardTitle>
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Calculator className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-slate-900">
+              {currentRatios.currentRatio.isReliable ? currentRatios.currentRatio.value.toFixed(2) : 'N/A'}
+            </div>
+            <p className="text-sm text-slate-600 mt-2">
+              Liquidity measure
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <CardTitle className="text-sm font-semibold">Debt-to-Equity</CardTitle>
+            <div className="p-2 bg-white/20 rounded-lg">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-slate-900">
+              {currentRatios.debtToEquity.isReliable ? currentRatios.debtToEquity.value.toFixed(2) : 'N/A'}
+            </div>
+            <p className="text-sm text-slate-600 mt-2">
+              Leverage indicator
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
