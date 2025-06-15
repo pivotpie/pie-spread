@@ -24,6 +24,7 @@ import {
   Info
 } from 'lucide-react';
 import { EditableLoanForm } from './EditableLoanForm';
+import { PayabilityScoreVisualization } from './PayabilityScoreVisualization';
 
 interface EnhancedRatios {
   currentRatio: { value: number; isReliable: boolean };
@@ -379,7 +380,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
           </Card>
 
           {/* Loan Parameters */}
-          <Card className="bg-white/90 backdrop-blur-sm border-2 border-blue-100 shadow-xl rounded-2xl">
+          <Card className="bg-white/90 border-2 border-blue-100 shadow-xl rounded-2xl">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Settings className="h-5 w-5 text-blue-500" />
@@ -490,7 +491,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
           </Card>
 
           {/* Loan Payability Analysis */}
-          <Card className="bg-white/90 backdrop-blur-sm border-2 border-green-100 shadow-xl rounded-2xl">
+          <Card className="bg-white/90 border-2 border-green-100 shadow-xl rounded-2xl">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-green-500" />
@@ -542,88 +543,14 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
         </div>
       </div>
 
-      {/* Financial Health Timeline */}
-      <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-blue-500" />
-            Financial Health Timeline
-          </CardTitle>
-          <CardDescription>Historical performance and projected financial strength</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-12 gap-2 mb-6">
-            {financialHealthData.map((data, index) => (
-              <div key={data.period} className="text-center">
-                <div className="mb-2">
-                  <div className="text-xs font-medium text-slate-700 mb-1">{data.period}</div>
-                  <div className={`text-xs px-1 py-0.5 rounded ${
-                    data.isCurrent ? 'bg-blue-200 text-blue-800' :
-                    data.isProjected ? 'bg-green-100 text-green-700' : 
-                    'bg-slate-100 text-slate-600'
-                  }`}>
-                    {data.isCurrent ? 'Current' : data.isProjected ? 'Proj.' : 'Hist.'}
-                  </div>
-                </div>
-                
-                {/* Health Bar */}
-                <div className="relative h-24 bg-slate-100 rounded overflow-hidden mb-1">
-                  <div 
-                    className={`absolute bottom-0 w-full transition-all duration-500 ${
-                      data.score >= 80 ? 'bg-gradient-to-t from-green-500 to-green-400' :
-                      data.score >= 60 ? 'bg-gradient-to-t from-blue-500 to-blue-400' :
-                      data.score >= 40 ? 'bg-gradient-to-t from-yellow-500 to-yellow-400' :
-                      'bg-gradient-to-t from-red-500 to-red-400'
-                    } ${data.isCurrent ? 'ring-2 ring-blue-400' : ''}`}
-                    style={{ height: `${data.score}%` }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold text-white drop-shadow-lg">
-                      {data.score}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Legend and Analysis Summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-3">Score Legend</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-gradient-to-r from-green-500 to-green-400 rounded"></div>
-                  <span>Excellent (80-100)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-400 rounded"></div>
-                  <span>Good (60-79)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded"></div>
-                  <span>Fair (40-59)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-red-400 rounded"></div>
-                  <span>Poor (0-39)</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-3">Analysis Summary</h4>
-              <ul className="text-sm space-y-1 text-slate-600">
-                <li>• Consistent financial health performance across periods</li>
-                <li>• Strong liquidity position supports loan repayment capacity</li>
-                <li>• Stable profitability indicates sustainable business operations</li>
-                <li>• Positive trajectory suggests improving creditworthiness</li>
-                <li>• Current assessment supports competitive loan pricing</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Enhanced Payability Score Visualization - replacing Financial Health Timeline */}
+      <PayabilityScoreVisualization
+        ratios={ratios}
+        loanAmount={currentLoanAmount}
+        interestRate={currentInterestRate}
+        termYears={currentRepaymentTerm}
+        monthlyEMI={monthlyEMI}
+      />
 
       {/* Detailed Scoring Factors */}
       <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
