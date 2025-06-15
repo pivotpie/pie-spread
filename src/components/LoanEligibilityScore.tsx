@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { EditableLoanForm } from './EditableLoanForm';
 import { PayabilityScoreVisualization } from './PayabilityScoreVisualization';
+import { ScoringBreakdownModal } from './ScoringBreakdownModal';
 
 interface EnhancedRatios {
   currentRatio: { value: number; isReliable: boolean };
@@ -65,6 +66,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   console.log('LoanEligibilityScore rendering with ratios:', ratios, 'year:', year);
   
   const [showLoanForm, setShowLoanForm] = useState(false);
+  const [showScoringModal, setShowScoringModal] = useState(false);
   const [loanAmount, setLoanAmount] = useState([0]);
   const [interestRate, setInterestRate] = useState([0]);
   const [repaymentTerm, setRepaymentTerm] = useState([0]);
@@ -423,9 +425,18 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                   {recommendation.message}
                 </AlertDescription>
               </Alert>
-              <div className="text-slate-600 text-sm">
+              <div className="text-slate-600 text-sm mb-4">
                 Highly recommended for CAD limit approval and competitive terms
               </div>
+              <Button 
+                onClick={() => setShowScoringModal(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                View Scoring Details
+              </Button>
             </CardContent>
           </Card>
 
@@ -618,53 +629,15 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
         monthlyEMI={monthlyEMI}
       />
 
-      {/* Detailed Scoring Factors */}
-      <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-slate-900">Scoring Breakdown</CardTitle>
-          <CardDescription>
-            Detailed analysis of factors contributing to the eligibility score
-            <div className="mt-2 text-sm text-slate-500">
-              Total Score: {totalActualScore.toFixed(1)} out of {totalMaxScore.toFixed(1)} possible points
-            </div>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {factors.map((factor, index) => {
-              const contributionPercentage = totalMaxScore > 0 ? (factor.actualContribution / totalMaxScore) * 100 : 0;
-              return (
-                <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <div>
-                    <div className="font-semibold text-slate-900">{factor.name}</div>
-                    <div className="text-sm text-slate-600">
-                      Contribution: {contributionPercentage.toFixed(1)}% of total score
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-slate-900">
-                      {factor.actualContribution.toFixed(1)}
-                    </div>
-                    <div className="text-sm text-slate-500">
-                      ({factor.score.toFixed(1)}/{factor.maxScore} raw)
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <div className="text-sm text-slate-600 mb-2">Scoring Method:</div>
-            <div className="text-sm text-slate-700">
-              {hasAECB ? (
-                "Financial ratios weighted at 60%, AECB factors at 40%. Each factor contributes proportionally to the final score out of 100."
-              ) : (
-                "Financial ratios only (100% weight). AECB data not available - consider obtaining for enhanced assessment."
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Scoring Breakdown Modal */}
+      <ScoringBreakdownModal
+        isOpen={showScoringModal}
+        onClose={() => setShowScoringModal(false)}
+        factors={factors}
+        totalActualScore={totalActualScore}
+        totalMaxScore={totalMaxScore}
+        hasAECB={hasAECB}
+      />
     </div>
   );
 };
