@@ -73,7 +73,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const calculateEnhancedScore = () => {
     let score = 0;
     let maxScore = 0;
-    const factors: Array<{ name: string; score: number; maxScore: number; weight: number }> = [];
+    const factors: Array<{ name: string; score: number; maxScore: number; actualContribution: number }> = [];
 
     // Financial Ratios (60% weight when AECB available, 100% when not)
     const hasAECB = ratios.aecbScore !== undefined;
@@ -82,32 +82,56 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
     // Current Ratio (Liquidity)
     if (ratios.currentRatio.isReliable) {
       const currentRatioScore = Math.min(Math.max((ratios.currentRatio.value - 0.5) * 20, 0), 20);
-      factors.push({ name: 'Current Ratio', score: currentRatioScore, maxScore: 20, weight: financialWeight });
-      score += currentRatioScore * financialWeight;
+      const actualContribution = currentRatioScore * financialWeight;
+      factors.push({ 
+        name: 'Current Ratio', 
+        score: currentRatioScore, 
+        maxScore: 20, 
+        actualContribution 
+      });
+      score += actualContribution;
     }
     maxScore += 20 * financialWeight;
 
     // Debt-to-Equity (Leverage)
     if (ratios.debtToEquity.isReliable) {
       const debtEquityScore = Math.max(20 - (ratios.debtToEquity.value * 5), 0);
-      factors.push({ name: 'Debt-to-Equity', score: debtEquityScore, maxScore: 20, weight: financialWeight });
-      score += debtEquityScore * financialWeight;
+      const actualContribution = debtEquityScore * financialWeight;
+      factors.push({ 
+        name: 'Debt-to-Equity', 
+        score: debtEquityScore, 
+        maxScore: 20, 
+        actualContribution 
+      });
+      score += actualContribution;
     }
     maxScore += 20 * financialWeight;
 
     // Profitability
     if (ratios.netProfitMargin.isReliable) {
       const profitabilityScore = Math.min(Math.max(ratios.netProfitMargin.value * 2, 0), 15);
-      factors.push({ name: 'Net Profit Margin', score: profitabilityScore, maxScore: 15, weight: financialWeight });
-      score += profitabilityScore * financialWeight;
+      const actualContribution = profitabilityScore * financialWeight;
+      factors.push({ 
+        name: 'Net Profit Margin', 
+        score: profitabilityScore, 
+        maxScore: 15, 
+        actualContribution 
+      });
+      score += actualContribution;
     }
     maxScore += 15 * financialWeight;
 
     // Return on Assets
     if (ratios.returnOnAssets.isReliable) {
       const roaScore = Math.min(Math.max(ratios.returnOnAssets.value * 1.5, 0), 15);
-      factors.push({ name: 'Return on Assets', score: roaScore, maxScore: 15, weight: financialWeight });
-      score += roaScore * financialWeight;
+      const actualContribution = roaScore * financialWeight;
+      factors.push({ 
+        name: 'Return on Assets', 
+        score: roaScore, 
+        maxScore: 15, 
+        actualContribution 
+      });
+      score += actualContribution;
     }
     maxScore += 15 * financialWeight;
 
@@ -118,24 +142,42 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
       // AECB Credit Score (most important factor)
       if (ratios.aecbScore) {
         const aecbScore = ((ratios.aecbScore - 300) / (850 - 300)) * 25; // Normalize to 0-25
-        factors.push({ name: 'AECB Credit Score', score: Math.max(aecbScore, 0), maxScore: 25, weight: aecbWeight });
-        score += Math.max(aecbScore, 0) * aecbWeight;
+        const actualContribution = Math.max(aecbScore, 0) * aecbWeight;
+        factors.push({ 
+          name: 'AECB Credit Score', 
+          score: Math.max(aecbScore, 0), 
+          maxScore: 25, 
+          actualContribution 
+        });
+        score += actualContribution;
       }
       maxScore += 25 * aecbWeight;
 
       // Payment Performance
       if (ratios.paymentPerformance !== undefined) {
         const paymentScore = (ratios.paymentPerformance / 100) * 20;
-        factors.push({ name: 'Payment Performance', score: paymentScore, maxScore: 20, weight: aecbWeight });
-        score += paymentScore * aecbWeight;
+        const actualContribution = paymentScore * aecbWeight;
+        factors.push({ 
+          name: 'Payment Performance', 
+          score: paymentScore, 
+          maxScore: 20, 
+          actualContribution 
+        });
+        score += actualContribution;
       }
       maxScore += 20 * aecbWeight;
 
       // Credit Utilization (lower is better)
       if (ratios.creditUtilization !== undefined) {
         const utilizationScore = Math.max(15 - (ratios.creditUtilization / 100) * 15, 0);
-        factors.push({ name: 'Credit Utilization', score: utilizationScore, maxScore: 15, weight: aecbWeight });
-        score += utilizationScore * aecbWeight;
+        const actualContribution = utilizationScore * aecbWeight;
+        factors.push({ 
+          name: 'Credit Utilization', 
+          score: utilizationScore, 
+          maxScore: 15, 
+          actualContribution 
+        });
+        score += actualContribution;
       }
       maxScore += 15 * aecbWeight;
 
@@ -146,8 +188,14 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
         negativeDeduction += ratios.negativeFactors.legalCases * 3; // 3 points per legal case
         if (ratios.negativeFactors.restructuring) negativeDeduction += 5; // 5 points for restructuring
 
-        factors.push({ name: 'Negative Factors', score: -negativeDeduction, maxScore: 0, weight: aecbWeight });
-        score -= negativeDeduction * aecbWeight;
+        const actualContribution = -negativeDeduction * aecbWeight;
+        factors.push({ 
+          name: 'Negative Factors', 
+          score: -negativeDeduction, 
+          maxScore: 0, 
+          actualContribution 
+        });
+        score += actualContribution;
       }
     }
 
@@ -156,11 +204,13 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
     return {
       score: Math.min(finalScore, 100),
       factors,
-      hasAECB
+      hasAECB,
+      totalActualScore: score,
+      totalMaxScore: maxScore
     };
   };
 
-  const { score, factors, hasAECB } = calculateEnhancedScore();
+  const { score, factors, hasAECB, totalActualScore, totalMaxScore } = calculateEnhancedScore();
   console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
   // Loan amount calculation using the specified formula: (40% of revenue + 3x net profit) - existing debts
@@ -572,28 +622,46 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
       <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl">
         <CardHeader>
           <CardTitle className="text-xl font-bold text-slate-900">Scoring Breakdown</CardTitle>
-          <CardDescription>Detailed analysis of factors contributing to the eligibility score</CardDescription>
+          <CardDescription>
+            Detailed analysis of factors contributing to the eligibility score
+            <div className="mt-2 text-sm text-slate-500">
+              Total Score: {totalActualScore.toFixed(1)} out of {totalMaxScore.toFixed(1)} possible points
+            </div>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {factors.map((factor, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                <div>
-                  <div className="font-semibold text-slate-900">{factor.name}</div>
-                  <div className="text-sm text-slate-600">
-                    Weight: {(factor.weight * 100).toFixed(0)}%
+            {factors.map((factor, index) => {
+              const contributionPercentage = totalMaxScore > 0 ? (factor.actualContribution / totalMaxScore) * 100 : 0;
+              return (
+                <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                  <div>
+                    <div className="font-semibold text-slate-900">{factor.name}</div>
+                    <div className="text-sm text-slate-600">
+                      Contribution: {contributionPercentage.toFixed(1)}% of total score
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-slate-900">
+                      {factor.actualContribution.toFixed(1)}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      ({factor.score.toFixed(1)}/{factor.maxScore} raw)
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-slate-900">
-                    {factor.score.toFixed(1)}/{factor.maxScore}
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {factor.maxScore > 0 ? ((factor.score / factor.maxScore) * 100).toFixed(0) : '0'}%
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div className="text-sm text-slate-600 mb-2">Scoring Method:</div>
+            <div className="text-sm text-slate-700">
+              {hasAECB ? (
+                "Financial ratios weighted at 60%, AECB factors at 40%. Each factor contributes proportionally to the final score out of 100."
+              ) : (
+                "Financial ratios only (100% weight). AECB data not available - consider obtaining for enhanced assessment."
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
