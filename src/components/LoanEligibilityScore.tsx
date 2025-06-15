@@ -215,12 +215,13 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const { score, factors, hasAECB, totalActualScore, totalMaxScore } = calculateEnhancedScore();
   console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
-  // Loan amount calculation using the specified formula: (40% of revenue + 3x net profit) - existing debts
+  // Loan amount calculation using the new Max formula
   const getLoanAmount = (score: number) => {
-    // Apply the user's formula: (40% of revenue + 3x net profit) - existing debts
+    // Apply the user's updated formula: Max(40% of revenue, 3x net profit) - existing debts
     const revenueComponent = totalRevenue * 0.4; // 40% of revenue
     const profitComponent = netProfit * 3; // 3x net profit
-    const calculatedAmount = revenueComponent + profitComponent - existingDebts;
+    const maxComponent = Math.max(revenueComponent, profitComponent); // Take the maximum
+    const calculatedAmount = maxComponent - existingDebts;
     
     // Ensure minimum loan amount of 100K AED
     const recommendedAmount = Math.max(calculatedAmount, 100000);
@@ -229,6 +230,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
       amount: Math.round(recommendedAmount),
       revenueComponent,
       profitComponent,
+      maxComponent,
       existingDebts,
       calculatedAmount: Math.round(calculatedAmount)
     };
@@ -519,7 +521,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 Suggested Loan Amount
               </CardTitle>
               <CardDescription className="text-slate-600">
-                Based on formula: (40% of revenue + 3x net profit) - existing debts
+                Based on formula: Max(40% of revenue, 3x net profit) - existing debts
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -537,6 +539,10 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                   <div className="flex justify-between">
                     <span className="text-slate-600">3x Net Profit:</span>
                     <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.profitComponent)}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="text-slate-600">Max Component:</span>
+                    <span className="font-bold text-blue-600">{formatCurrencyK(loanCalculation.maxComponent)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Less: Existing Debts:</span>
