@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -313,7 +313,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const suggestedTerm = getLoanTerm(score);
 
   // Initialize sliders with suggested values
-  React.useEffect(() => {
+  useEffect(() => {
     setLoanAmount([loanCalculation.amount]);
     setInterestRate([suggestedRate]);
     setRepaymentTerm([suggestedTerm]);
@@ -449,7 +449,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Suggested Loan Amount with integrated formula */}
+          {/* Suggested Loan Amount */}
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl rounded-2xl overflow-hidden">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
@@ -457,7 +457,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 Suggested Loan Amount
               </CardTitle>
               <CardDescription className="text-slate-600">
-                Based on financial analysis
+                Based on (40% of the Total revenue + 3x net profit) - existing debts
               </CardDescription>
             </CardHeader>
             <CardContent>
