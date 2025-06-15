@@ -58,7 +58,6 @@ const Index = () => {
   }, [data]);
 
   const handleDataImported = (importedData: FinancialData) => {
-    console.log('Data imported successfully:', importedData);
     setData(importedData);
     
     // Auto-load corresponding AECB data based on company type
@@ -91,14 +90,12 @@ const Index = () => {
         aecbDataModule = await import('@/data/financialDataAECB.json');
       }
       setAecbData(aecbDataModule.default);
-      console.log('AECB data loaded successfully');
     } catch (error) {
       console.error('Failed to load AECB data:', error);
     }
   };
 
   const handleSampleDataLoad = () => {
-    console.log('Loading sample data...');
     import('@/data/financialData.json').then((data) => {
       handleDataImported(data.default);
     });
