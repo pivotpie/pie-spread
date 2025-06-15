@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -59,9 +58,9 @@ interface LoanEligibilityScoreProps {
 export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({ 
   ratios, 
   year, 
-  totalRevenue = 10000000, // Default 10M AED
-  netProfit = 1000000,     // Default 1M AED
-  existingDebts = 2000000  // Default 2M AED
+  totalRevenue = 5000000,  // Default 5M AED (more realistic)
+  netProfit = 500000,      // Default 500K AED (10% margin)
+  existingDebts = 1000000  // Default 1M AED (20% of revenue)
 }) => {
   console.log('LoanEligibilityScore rendering with ratios:', ratios, 'year:', year);
   
@@ -164,23 +163,50 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
   const { score, factors, hasAECB } = calculateEnhancedScore();
   console.log('Calculated score:', score, 'hasAECB:', hasAECB);
 
-  // Updated loan amount calculation using the new formula
+  // Improved loan amount calculation using Debt Service Coverage Ratio (DSCR)
   const getLoanAmount = (score: number) => {
-    // Formula: (40% of Revenue + 3x Net Profit) - Existing Debts
-    const revenueComponent = totalRevenue * 0.4;
-    const profitComponent = netProfit * 3;
-    const calculatedAmount = revenueComponent + profitComponent - existingDebts;
+    // Calculate available cash flow for debt service
+    // Assume 70% of net profit is available for debt service (conservative approach)
+    const availableCashFlow = netProfit * 0.7;
     
-    // Apply score-based adjustment (between 50% and 150% of calculated amount)
-    const scoreMultiplier = 0.5 + (score / 100);
-    const finalAmount = Math.max(calculatedAmount * scoreMultiplier, 100000); // Minimum 100K AED
+    // Required DSCR based on score (higher score = lower DSCR requirement)
+    // Score 80+: 1.2x, Score 60-79: 1.4x, Score 40-59: 1.6x, Below 40: 1.8x
+    let requiredDSCR = 1.8;
+    if (score >= 80) requiredDSCR = 1.2;
+    else if (score >= 60) requiredDSCR = 1.4;
+    else if (score >= 40) requiredDSCR = 1.6;
+    
+    // Maximum annual debt service based on DSCR
+    const maxAnnualDebtService = availableCashFlow / requiredDSCR;
+    
+    // Calculate loan amount based on typical 5-year term and average interest rate
+    const assumedRate = 0.12; // 12% average rate for calculation
+    const assumedTerm = 5; // 5 years
+    
+    // Calculate present value of annuity (loan amount)
+    const monthlyRate = assumedRate / 12;
+    const totalMonths = assumedTerm * 12;
+    const maxMonthlyPayment = maxAnnualDebtService / 12;
+    
+    const calculatedAmount = maxMonthlyPayment * 
+      ((1 - Math.pow(1 + monthlyRate, -totalMonths)) / monthlyRate);
+    
+    // Apply revenue-based cap (max 30% of annual revenue)
+    const revenueCap = totalRevenue * 0.3;
+    
+    // Final amount is the lower of calculated amount and revenue cap
+    const finalAmount = Math.min(calculatedAmount, revenueCap);
+    
+    // Minimum loan amount of 100K AED
+    const recommendedAmount = Math.max(finalAmount, 100000);
     
     return {
-      amount: Math.round(finalAmount),
-      revenueComponent,
-      profitComponent,
-      calculatedAmount,
-      scoreMultiplier
+      amount: Math.round(recommendedAmount),
+      availableCashFlow,
+      requiredDSCR,
+      maxAnnualDebtService,
+      revenueCap,
+      calculatedAmount: Math.round(calculatedAmount)
     };
   };
 
@@ -460,7 +486,7 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 Suggested Loan Amount
               </CardTitle>
               <CardDescription className="text-slate-600">
-                Based on (40% of the Total revenue + 3x net profit) - existing debts
+                Based on Debt Service Coverage Ratio (DSCR) analysis
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -470,7 +496,19 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 </div>
                 <div className="text-lg text-slate-600 mb-2">Lending Rate</div>
                 <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm bg-slate-50 p-4 rounded-lg">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Available Cash Flow:</span>
+                    <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.availableCashFlow)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Required DSCR:</span>
+                    <span className="font-semibold text-slate-900">{loanCalculation.requiredDSCR}x</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Revenue Cap (30%):</span>
+                    <span className="font-semibold text-slate-900">{formatCurrencyK(loanCalculation.revenueCap)}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Suggested Term:</span>
                     <span className="font-semibold text-slate-900">{suggestedTerm} years</span>
