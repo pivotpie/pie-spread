@@ -443,72 +443,13 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                   <span>10 Years</span>
                 </div>
               </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">Calculated EMI</span>
-                  <span className="text-lg font-bold text-blue-600">{formatCurrencyK(monthlyEMI)}</span>
-                </div>
-                <div className="text-xs text-slate-500 mt-1">Monthly payment for {currentRepaymentTerm} years at {currentInterestRate.toFixed(1)}%</div>
-              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Loan Calculation Formula */}
-          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
-                <Calculator className="h-6 w-6 text-purple-500" />
-                Loan Calculation Formula
-              </CardTitle>
-              <CardDescription className="text-slate-600">
-                How we calculate your eligible loan amount
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-white/70 p-4 rounded-lg border border-purple-200 mb-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-800 mb-2">Formula</div>
-                  <div className="text-sm font-mono bg-purple-100 p-2 rounded border">
-                    (40% × Revenue + 3 × Net Profit) - Existing Debts
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                  <span className="text-slate-700">40% of Revenue:</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.revenueComponent)}</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                  <span className="text-slate-700">3 × Net Profit:</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.profitComponent)}</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                  <span className="text-slate-700">Less: Existing Debts:</span>
-                  <span className="font-semibold text-red-600">-{formatCurrency(existingDebts)}</span>
-                </div>
-                <div className="border-t border-purple-200 pt-2">
-                  <div className="flex justify-between items-center p-2 bg-purple-100 rounded">
-                    <span className="text-slate-700 font-medium">Base Calculation:</span>
-                    <span className="font-bold text-purple-800">{formatCurrency(loanCalculation.calculatedAmount)}</span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-slate-600 mb-1">Score Adjustment: {(loanCalculation.scoreMultiplier * 100).toFixed(0)}%</div>
-                  <div className="flex items-center justify-center gap-2">
-                    <Info className="h-4 w-4 text-blue-500" />
-                    <span className="text-xs text-slate-600">Final amount adjusted based on credit score</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Suggested Loan Amount */}
+          {/* Suggested Loan Amount with integrated formula */}
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl rounded-2xl overflow-hidden">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
@@ -519,30 +460,73 @@ export const LoanEligibilityScore: React.FC<LoanEligibilityScoreProps> = ({
                 Based on financial analysis
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">
-                {formatCurrency(loanCalculation.amount)}
+            <CardContent>
+              <div className="text-center mb-6">
+                <div className="text-4xl font-bold text-green-600 mb-2">
+                  {formatCurrency(loanCalculation.amount)}
+                </div>
+                <div className="text-lg text-slate-600 mb-2">Lending Rate</div>
+                <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Suggested Term:</span>
+                    <span className="font-semibold text-slate-900">{suggestedTerm} years</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Est. Monthly EMI:</span>
+                    <span className="font-semibold text-slate-900">{formatCurrencyK(calculateEMI(loanCalculation.amount, suggestedRate, suggestedTerm))}</span>
+                  </div>
+                </div>
+                {hasAECB && ratios.aecbScore && (
+                  <div className="mt-4">
+                    <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
+                      <CreditCard className="h-4 w-4 mr-1" />
+                      AECB Score: {ratios.aecbScore}
+                    </Badge>
+                  </div>
+                )}
               </div>
-              <div className="text-lg text-slate-600 mb-4">Lending Rate</div>
-              <div className="text-2xl font-bold text-blue-600 mb-4">{suggestedRate}%</div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Suggested Term:</span>
-                  <span className="font-semibold text-slate-900">{suggestedTerm} years</span>
+
+              {/* Integrated Formula Section */}
+              <div className="bg-white/70 p-4 rounded-lg border border-blue-200">
+                <div className="text-center mb-4">
+                  <div className="text-sm font-bold text-blue-800 mb-2 flex items-center justify-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    Calculation Formula
+                  </div>
+                  <div className="text-xs font-mono bg-blue-100 p-2 rounded border">
+                    (40% × Revenue + 3 × Net Profit) - Existing Debts
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Est. Monthly EMI:</span>
-                  <span className="font-semibold text-slate-900">{formatCurrencyK(calculateEMI(loanCalculation.amount, suggestedRate, suggestedTerm))}</span>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                    <span className="text-slate-700">40% of Revenue:</span>
+                    <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.revenueComponent)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                    <span className="text-slate-700">3 × Net Profit:</span>
+                    <span className="font-semibold text-slate-900">{formatCurrency(loanCalculation.profitComponent)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white/50 rounded">
+                    <span className="text-slate-700">Less: Existing Debts:</span>
+                    <span className="font-semibold text-red-600">-{formatCurrency(existingDebts)}</span>
+                  </div>
+                  <div className="border-t border-blue-200 pt-2">
+                    <div className="flex justify-between items-center p-2 bg-blue-100 rounded">
+                      <span className="text-slate-700 font-medium">Base Calculation:</span>
+                      <span className="font-bold text-blue-800">{formatCurrency(loanCalculation.calculatedAmount)}</span>
+                    </div>
+                  </div>
+                  <div className="text-center pt-2">
+                    <div className="text-xs text-slate-600 mb-1">Score Adjustment: {(loanCalculation.scoreMultiplier * 100).toFixed(0)}%</div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Info className="h-3 w-3 text-blue-500" />
+                      <span className="text-xs text-slate-600">Final amount adjusted based on credit score</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              {hasAECB && ratios.aecbScore && (
-                <div className="mt-4">
-                  <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
-                    <CreditCard className="h-4 w-4 mr-1" />
-                    AECB Score: {ratios.aecbScore}
-                  </Badge>
-                </div>
-              )}
             </CardContent>
           </Card>
 
