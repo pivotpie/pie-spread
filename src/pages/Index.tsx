@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -50,7 +49,19 @@ const Index = () => {
   const [aecbData, setAecbData] = useState<any>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState<string>('loan-eligibility');
+  const [isScrolled, setIsScrolled] = useState(false);
   
+  // Scroll detection effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 100); // Trigger when scrolled past 100px
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const years = useMemo(() => {
     if (!data) return [];
     const allYears = new Set<number>();
@@ -224,10 +235,23 @@ const Index = () => {
         <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
-              <div className="p-4 bg-white rounded-2xl shadow-2xl border-4 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-3xl">
+              <div 
+                id="header-logo"
+                className={`p-4 bg-white rounded-2xl shadow-2xl border-4 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-3xl ${
+                  isScrolled ? 'opacity-0 transform scale-75' : 'opacity-100 transform scale-100'
+                }`}
+                style={{ transition: 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out' }}
+              >
                 <img src="/lovable-uploads/88e0819a-d452-409b-88c3-b00337939bff.png" alt="Pie-Spread Logo" className="h-10 w-10" />
               </div>
-              Pie-Spread
+              <span 
+                id="header-title"
+                className={`transition-all duration-300 ${
+                  isScrolled ? 'opacity-0 transform translate-x-[-20px]' : 'opacity-100 transform translate-x-0'
+                }`}
+              >
+                Pie-Spread
+              </span>
             </h1>
             <p className="text-slate-600 mt-3 text-lg">Cash Against Documents - Financial Analysis & Risk Assessment</p>
           </div>
@@ -265,7 +289,8 @@ const Index = () => {
         {/* Sticky Navigation Tabs */}
         <StickyNavTabs 
           activeTab={activeNavTab} 
-          onTabChange={setActiveNavTab} 
+          onTabChange={setActiveNavTab}
+          isScrolled={isScrolled}
         />
 
         {/* Loan Eligibility Score */}
