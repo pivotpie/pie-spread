@@ -19,7 +19,7 @@ import { toast } from '@/components/ui/use-toast';
 interface DocumentImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDataImported: (data: any) => void;
+  onDataImported: (data: any, datasetType?: 'manufacturing' | 'fashion' | 'consumables') => void;
 }
 
 export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
@@ -39,9 +39,9 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
       setTimeout(() => {
         setUploadStatus('success');
         setTimeout(() => {
-          // Import sample data for now
+          // Import sample data for now (this would be replaced with actual file processing)
           import('@/data/financialData.json').then((data) => {
-            onDataImported(data.default);
+            onDataImported(data.default); // Don't pass dataset type - let it be detected
             onClose();
             setUploadStatus('idle');
           });
@@ -49,6 +49,7 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
       }, 2000);
     }
   };
+
 
   const handleSampleDataLoad = async (datasetType: 'manufacturing' | 'fashion' | 'consumables') => {
     try {
@@ -65,7 +66,7 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
       }
       
       if (data) {
-        onDataImported(data.default);
+        onDataImported(data.default, datasetType); // Pass the dataset type to the parent
         onClose();
         toast({
           title: "Data Loaded Successfully",
@@ -89,6 +90,7 @@ export const DocumentImportModal: React.FC<DocumentImportModalProps> = ({
       }, 3000);
     }
   };
+
 
   const documentTypes = [
     { name: 'Balance Sheet', icon: FileSpreadsheet, description: 'Assets, liabilities, and equity' },

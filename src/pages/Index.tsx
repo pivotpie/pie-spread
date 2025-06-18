@@ -60,14 +60,44 @@ const Index = () => {
     return Array.from(allYears).sort();
   }, [data]);
 
-  const handleDataImported = (importedData: FinancialData) => {
+  const detectDataSource = (financialData: FinancialData): 'manufacturing' | 'fashion' | 'consumables' => {
+    // Check for specific field patterns or values that indicate the dataset type
+    const balanceSheet = financialData["Balance Sheet"];
+    const incomeStatement = financialData["Income Statement"];
+    
+    // Look for specific indicators in the data
+    const totalRevenue = incomeStatement.find(item => 
+      item.field_name.toLowerCase().includes('revenue') || 
+      item.field_name.toLowerCase().includes('sales')
+    );
+    
+    const inventory = balanceSheet.find(item => 
+      item.field_name.toLowerCase().includes('inventory')
+    );
+    
+    // Fashion retail typically has higher inventory turnover and specific revenue patterns
+    if (totalRevenue && totalRevenue.value > 15000000 && inventory && inventory.value > 2000000) {
+      return 'fashion';
+    }
+    
+    // Consumables retail typically has lower margins and specific cost structures
+    if (totalRevenue && totalRevenue.value < 12000000 && inventory && inventory.value < 1500000) {
+      return 'consumables';
+    }
+    
+    // Default to manufacturing for other cases
+    return 'manufacturing';
+  };
+
+
+  const handleDataImported = (importedData: FinancialData, datasetType?: 'manufacturing' | 'fashion' | 'consumables') => {
     setData(importedData);
     
     // Auto-load corresponding AECB data based on company type
     if (importedData) {
-      // Detect company type and load appropriate AECB data
-      const companyName = "General Trading LLC"; // This would be detected from the data
-      loadAECBData(companyName);
+      // Use provided dataset type or detect it from the data
+      const detectedType = datasetType || detectDataSource(importedData);
+      loadAECBData(detectedType);
       
       // Set the most recent year as default
       const allYears = new Set<number>();
@@ -81,28 +111,34 @@ const Index = () => {
     }
   };
 
-  const loadAECBData = async (companyIdentifier: string) => {
+
+  const loadAECBData = async (datasetType: 'manufacturing' | 'fashion' | 'consumables') => {
     try {
       let aecbDataModule;
-      // Map company names to AECB data files
-      if (companyIdentifier.includes('Fashion')) {
+      
+      // Map dataset types to AECB data files
+      if (datasetType === 'fashion') {
         aecbDataModule = await import('@/data/fashionRetailAECB.json');
-      } else if (companyIdentifier.includes('Consumables')) {
+      } else if (datasetType === 'consumables') {
         aecbDataModule = await import('@/data/consumablesRetailAECB.json');
       } else {
         aecbDataModule = await import('@/data/financialDataAECB.json');
       }
+      
       setAecbData(aecbDataModule.default);
+      console.log(`Loaded AECB data for: ${datasetType}`); // Add this for debugging
     } catch (error) {
       console.error('Failed to load AECB data:', error);
     }
   };
 
+
   const handleSampleDataLoad = () => {
     import('@/data/financialData.json').then((data) => {
-      handleDataImported(data.default);
+      handleDataImported(data.default, 'manufacturing'); // Pass the dataset type explicitly
     });
   };
+
 
   const getValueByFieldAndYear = (statement: keyof FinancialData, fieldName: string, year: number) => {
     if (!data) return 0;
