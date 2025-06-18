@@ -36,6 +36,12 @@ export const StickyNavTabs: React.FC<StickyNavTabsProps> = ({
       description: 'Key financial metrics and KPIs'
     },
     {
+      id: 'aecb-score',
+      label: 'AECB Score',
+      icon: Building,
+      description: 'Credit bureau data and risk assessment'
+    },
+    {
       id: 'ratio-analysis',
       label: 'Ratio Analysis',
       icon: FileSpreadsheet,
@@ -52,12 +58,6 @@ export const StickyNavTabs: React.FC<StickyNavTabsProps> = ({
       label: 'Trend Analysis',
       icon: TrendingUp,
       description: 'Historical trends and projections'
-    },
-    {
-      id: 'aecb-score',
-      label: 'AECB Score',
-      icon: Building,
-      description: 'Credit bureau data and risk assessment'
     }
   ];
 
@@ -108,10 +108,10 @@ export const StickyNavTabs: React.FC<StickyNavTabsProps> = ({
                     <NavigationMenuLink
                       className={`
                         flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer
-                        hover:bg-blue-50 hover:border-blue-200 border-2 border-transparent
+                        border-2 border-transparent
                         ${activeTab === tab.id 
                           ? 'bg-blue-500 text-white shadow-lg border-blue-500' 
-                          : 'bg-white/80 text-slate-700 hover:text-blue-700'
+                          : 'bg-white/80 text-slate-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700'
                         }
                       `}
                       onClick={() => handleTabClick(tab.id)}
