@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { BlankState } from '@/components/BlankState';
 import { DocumentImportModal } from '@/components/DocumentImportModal';
 import { FinancialCharts } from '@/components/FinancialCharts';
 import { AECBAnalysis } from '@/components/AECBAnalysis';
+import { StickyNavTabs } from '@/components/StickyNavTabs';
 import { calculateRobustRatios } from '@/utils/ratioCalculations';
 
 interface FinancialItem {
@@ -47,6 +49,7 @@ const Index = () => {
   const [data, setData] = useState<FinancialData | null>(null);
   const [aecbData, setAecbData] = useState<any>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [activeNavTab, setActiveNavTab] = useState<string>('loan-eligibility');
   
   const years = useMemo(() => {
     if (!data) return [];
@@ -223,13 +226,19 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Sticky Navigation Tabs */}
+        <StickyNavTabs 
+          activeTab={activeNavTab} 
+          onTabChange={setActiveNavTab} 
+        />
+
         {/* Loan Eligibility Score */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+        <div id="loan-eligibility" className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
           <LoanEligibilityScore ratios={enhancedRatios} year={selectedYear} />
         </div>
 
         {/* Financial Charts Section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
+        <div id="financial-dashboard" className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
           <FinancialCharts data={data} selectedYear={selectedYear} years={years} currentRatios={currentRatios} />
         </div>
 
@@ -246,11 +255,11 @@ const Index = () => {
             </div>
 
             <div className="p-8">
-              <TabsContent value="ratios">
+              <TabsContent value="ratios" id="ratio-analysis">
                 <RatioAnalysis ratios={enhancedRatios} year={selectedYear} />
               </TabsContent>
 
-              <TabsContent value="statements" className="space-y-8">
+              <TabsContent value="statements" className="space-y-8" id="financial-documents">
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                   <Card className="bg-white/90 backdrop-blur-sm border-2 border-white/30 shadow-xl rounded-2xl overflow-hidden">
                     <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 border-b border-slate-200">
@@ -293,11 +302,11 @@ const Index = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="trends">
+              <TabsContent value="trends" id="trend-analysis">
                 <TrendChart data={data} years={years} />
               </TabsContent>
 
-              <TabsContent value="credit-bureau">
+              <TabsContent value="credit-bureau" id="aecb-score">
                 <AECBAnalysis data={aecbData} />
               </TabsContent>
             </div>
