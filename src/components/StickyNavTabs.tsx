@@ -118,7 +118,6 @@ export const StickyNavTabs: React.FC<StickyNavTabsProps> = ({
                     >
                       <tab.icon className="h-5 w-5" />
                       <span className="font-medium whitespace-nowrap">{tab.label}</span>
-                      {tab.id === 'aecb-score'}
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 ))}
