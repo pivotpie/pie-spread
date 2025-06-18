@@ -234,7 +234,7 @@ const Index = () => {
         {/* Header */}
         <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl p-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
               <div 
                 id="header-logo"
                 className={`p-4 bg-white rounded-2xl shadow-2xl border-4 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-3xl ${
@@ -246,7 +246,7 @@ const Index = () => {
               </div>
               <span 
                 id="header-title"
-                className={`transition-all duration-300 ${
+                className={`bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent transition-all duration-300 ${
                   isScrolled ? 'opacity-0 transform translate-x-[-20px]' : 'opacity-100 transform translate-x-0'
                 }`}
               >
