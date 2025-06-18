@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +49,7 @@ const Index = () => {
   const [aecbData, setAecbData] = useState<any>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState<string>('loan-eligibility');
+  const [currentDataSource, setCurrentDataSource] = useState<string>('');
   
   const years = useMemo(() => {
     if (!data) return [];
@@ -60,48 +60,115 @@ const Index = () => {
     return Array.from(allYears).sort();
   }, [data]);
 
-  const handleDataImported = (importedData: FinancialData) => {
+  const handleDataImported = (importedData: FinancialData, dataSource?: string) => {
+    console.log('Data imported from source:', dataSource);
     setData(importedData);
     
-    // Auto-load corresponding AECB data based on company type
-    if (importedData) {
-      // Detect company type and load appropriate AECB data
-      const companyName = "General Trading LLC"; // This would be detected from the data
-      loadAECBData(companyName);
-      
-      // Set the most recent year as default
-      const allYears = new Set<number>();
-      Object.values(importedData).forEach(items => 
-        items.forEach(item => allYears.add(item.year))
-      );
-      const sortedYears = Array.from(allYears).sort();
-      if (sortedYears.length > 0) {
-        setSelectedYear(sortedYears[sortedYears.length - 1]);
-      }
+    // Set the data source for AECB matching
+    if (dataSource) {
+      setCurrentDataSource(dataSource);
+      loadAECBData(dataSource);
+    } else {
+      // Try to detect data source from the data structure
+      const detectedSource = detectDataSource(importedData);
+      setCurrentDataSource(detectedSource);
+      loadAECBData(detectedSource);
+    }
+    
+    // Set the most recent year as default
+    const allYears = new Set<number>();
+    Object.values(importedData).forEach(items => 
+      items.forEach(item => allYears.add(item.year))
+    );
+    const sortedYears = Array.from(allYears).sort();
+    if (sortedYears.length > 0) {
+      setSelectedYear(sortedYears[sortedYears.length - 1]);
     }
   };
 
-  const loadAECBData = async (companyIdentifier: string) => {
+  const detectDataSource = (importedData: FinancialData): string => {
+    // Try to detect the data source based on specific financial patterns or company indicators
+    const incomeStatement = importedData["Income Statement"];
+    const balanceSheet = importedData["Balance Sheet"];
+    
+    // Look for industry-specific patterns in the data
+    const hasInventory = balanceSheet.some(item => 
+      item.field_name.toLowerCase().includes('inventory') && item.value > 0
+    );
+    
+    const revenueItems = incomeStatement.filter(item => 
+      item.field_name.toLowerCase().includes('revenue') || 
+      item.field_name.toLowerCase().includes('sales')
+    );
+    
+    // Check for fashion retail patterns (higher inventory turnover, seasonal patterns)
+    const totalRevenue = revenueItems.reduce((sum, item) => sum + item.value, 0);
+    const inventoryItems = balanceSheet.filter(item => 
+      item.field_name.toLowerCase().includes('inventory')
+    );
+    const totalInventory = inventoryItems.reduce((sum, item) => sum + item.value, 0);
+    
+    if (hasInventory && totalInventory > 0) {
+      const inventoryTurnover = totalRevenue / totalInventory;
+      // Fashion retail typically has higher inventory turnover
+      if (inventoryTurnover > 3) {
+        return 'fashion';
+      } else if (inventoryTurnover > 1) {
+        return 'consumables';
+      }
+    }
+    
+    return 'general';
+  };
+
+  const loadAECBData = async (dataSourceIdentifier: string) => {
     try {
+      console.log('Loading AECB data for source:', dataSourceIdentifier);
       let aecbDataModule;
-      // Map company names to AECB data files
-      if (companyIdentifier.includes('Fashion')) {
+      
+      // Map data sources to appropriate AECB files
+      if (dataSourceIdentifier.includes('fashion') || dataSourceIdentifier === 'fashion') {
+        console.log('Loading fashion AECB data');
         aecbDataModule = await import('@/data/fashionRetailAECB.json');
-      } else if (companyIdentifier.includes('Consumables')) {
+      } else if (dataSourceIdentifier.includes('consumables') || dataSourceIdentifier === 'consumables') {
+        console.log('Loading consumables AECB data');
         aecbDataModule = await import('@/data/consumablesRetailAECB.json');
       } else {
+        console.log('Loading general AECB data');
         aecbDataModule = await import('@/data/financialDataAECB.json');
       }
+      
       setAecbData(aecbDataModule.default);
     } catch (error) {
       console.error('Failed to load AECB data:', error);
     }
   };
 
-  const handleSampleDataLoad = () => {
-    import('@/data/financialData.json').then((data) => {
-      handleDataImported(data.default);
-    });
+  const handleSampleDataLoad = async (sampleType?: string) => {
+    try {
+      let dataModule;
+      let dataSource = 'general';
+      
+      if (sampleType === 'fashion') {
+        dataModule = await import('@/data/fashionRetailData.json');
+        dataSource = 'fashion';
+      } else if (sampleType === 'consumables') {
+        dataModule = await import('@/data/consumablesRetailData.json');
+        dataSource = 'consumables';
+      } else {
+        dataModule = await import('@/data/financialData.json');
+        dataSource = 'general';
+      }
+      
+      console.log('Loading sample data:', sampleType || 'default', 'with source:', dataSource);
+      handleDataImported(dataModule.default, dataSource);
+    } catch (error) {
+      console.error('Failed to load sample data:', error);
+      // Fallback to default data
+      import('@/data/financialData.json').then((data) => {
+        handleDataImported(data.default, 'general');
+      });
+    }
   };
 
   const getValueByFieldAndYear = (statement: keyof FinancialData, fieldName: string, year: number) => {
@@ -194,6 +261,9 @@ const Index = () => {
               Pie-Spread
             </h1>
             <p className="text-slate-600 mt-3 text-lg">Cash Against Documents - Financial Analysis & Risk Assessment</p>
+            {currentDataSource && (
+              <p className="text-slate-500 text-sm mt-1">Data Source: {currentDataSource.charAt(0).toUpperCase() + currentDataSource.slice(1)}</p>
+            )}
           </div>
           <div className="flex items-center gap-6">
             <Button 
