@@ -338,10 +338,15 @@ export const RatioAnalysis: React.FC<RatioAnalysisProps> = ({ ratios, year }) =>
                       <Badge 
                         variant={ratioItem.analysis.status === 'good' ? 'default' : 
                                 ratioItem.analysis.status === 'acceptable' ? 'secondary' : 'destructive'}
-                        className="text-xs"
+                        className={`text-xs ${
+                          ratioItem.analysis.status === 'good' 
+                            ? 'bg-green-500 text-white hover:bg-green-600 border-green-500' 
+                            : ''
+                        }`}
                       >
                         {ratioItem.analysis.status.charAt(0).toUpperCase() + ratioItem.analysis.status.slice(1)}
                       </Badge>
+
                     </div>
                     <div className="text-xs text-gray-600">
                       <strong>Benchmark:</strong> {ratioItem.benchmark}
